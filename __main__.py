@@ -18,7 +18,10 @@ class SnifferThread(threading.Thread):
 
 
 if __name__ == "__main__":
-    t = SnifferThread(print)
+
+    def print_msg(msg):
+        print(msg.json())
+    t = SnifferThread(print_msg)
     t.start()
     try:
         while True:
