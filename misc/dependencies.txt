@@ -1,0 +1,13 @@
+wheel
+wdom
+fritm
+scapy
+tornado
+pyperclip
+colorama
+requests
+opencv-python
+Pillow
+pywin32
+pyautogui
+tqdm
