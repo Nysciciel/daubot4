@@ -115,5 +115,5 @@ def getIndiceCoordFromMapId(indice, idd, direction, world=0):
     for dic in hints:
         for index in indexList:
             if str(dic['n']) == index:
-                return (dic['x'], dic['y'])
+                return dic['x'], dic['y']
     return

@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from daufousMap import getIndiceCoordFromMapId, getIndiceCoord
 import logging
+import time
 
 
 def release(lokkk):
@@ -222,6 +223,7 @@ class HuntStatus:
         self.pos = None
         self.startPos = None
         self.pho_location = None
+        self.pho_analysed = True
 
     def __str__(self):
         return ('Current Position:' + str(self.pos) + "\n" +
@@ -257,6 +259,7 @@ class HuntStatus:
         return self.currentStep.indice.isPhorreur()
 
     def handleMessage(self, msg):
+
         if msg is None:
             return
         current_time = datetime.now().strftime("%H:%M:%S")
@@ -274,6 +277,7 @@ class HuntStatus:
                             actor["__type__"] == 'GameRolePlayTreasureHintInformations'):
                         self.pho_location = self.pos.copy()
                         release(self.lok)
+            self.pho_analysed = True
         if msg['__type__'] == 'TreasureHuntFinishedMessage':
             self.reset()
         if msg['__type__'] == "TreasureHuntMessage":
@@ -304,5 +308,6 @@ class HuntStatus:
                             current_map = self.flags[index]
                         else:
                             current_map = s.endMap
-            # print(self)
+
+            print(self)
             release(self.lok)
