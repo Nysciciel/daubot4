@@ -250,8 +250,7 @@ class HuntStatus:
             return
         if msg['__type__'] == "CurrentMapMessage":
             self.pos = Map(id=msg['mapId'])
-            if self.pos == self.currentStep.endMap:
-                self.lok.release()
+            self.lok.release()
         if msg['__type__'] == "MapComplementaryInformationsDataMessage":
             if not self.currentStep.indice.isPhorreur:
                 return
@@ -299,5 +298,5 @@ class HuntStatus:
                                         lost = True
                                 else:
                                     current_map = s.endMap
-            print(self)
+            #print(self)
             self.lok.release()

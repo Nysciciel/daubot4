@@ -58,9 +58,12 @@ def getIndicesFromMapId(idd, direction, world=0):
     site = "https://dofus-map.com/huntTool/getData.php?mapId=" + str(idd)
     site += "&direction=" + str(direction) + "&world=" + str(world) + "&language=fr"
     r = requests.post(site)
-    if not ("hints" in json.loads(r.text).keys()):
-        return []
-    return json.loads(r.text)["hints"]
+    try:
+        if not ("hints" in json.loads(r.text).keys()):
+            return []
+        return json.loads(r.text)["hints"]
+    except json.decoder.JSONDecodeError:
+        return None
 
 
 def getIndiceDistFromMapId(indice, idd, direction, world=0):

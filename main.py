@@ -26,7 +26,7 @@ if __name__ == "__main__":
                     todo = "go to:" + str(status.pho_location)
                 else:
                     todo = "search pho "+str(status.currentStep.dir_str())
-            elif not status.currentStep.endMap.isUnknown():
+            elif not status.currentStep.endMap.isUnknown() and status.currentStep.endMap:
                 todo = "go to:"+str(status.currentStep.endMap)
             else:
                 todo = "lost"
