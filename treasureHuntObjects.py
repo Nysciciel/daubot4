@@ -1,6 +1,7 @@
 import json
-
+from datetime import datetime
 from daufousMap import getIndiceCoordFromMapId, getIndiceCoord
+import logging
 
 
 
@@ -248,6 +249,8 @@ class HuntStatus:
     def handleMessage(self, msg):
         if msg is None:
             return
+        current_time = datetime.now().strftime("%H:%M:%S")
+        logging.info(current_time + str(msg))
         if msg['__type__'] == "CurrentMapMessage":
             self.pos = Map(id=msg['mapId'])
             self.lok.release()

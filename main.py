@@ -1,12 +1,17 @@
-import time
 import threading
 from sniffer.sniffer import SnifferThread
 from treasureHuntObjects import HuntStatus
 import pyperclip
+import logging
+import os
+
 
 lok = threading.Lock()
 status = HuntStatus(lok)
 lok.acquire(blocking=True, timeout=-1)
+
+os.remove("messages.log")
+logging.basicConfig(filename="messages.log", level=logging.INFO, format='%(message)s')
 
 if __name__ == "__main__":
 
