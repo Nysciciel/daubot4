@@ -1,9 +1,5 @@
-import logging
-
 from sniffer import protocol
-from sniffer.binrw import Buffer, Data
-
-logger = logging.getLogger("labot")
+from sniffer.binrw import Data, Buffer
 
 
 class Msg:
@@ -13,7 +9,6 @@ class Msg:
             data = Data(data)
         self.data = data
         self.count = count
-        # logger.debug("Initialized Msg with id {}".format(self.id))
 
     def __str__(self):
         ans = str.format(
@@ -54,28 +49,23 @@ class Msg:
         except IndexError:
             buf.pos = 0
             #buf.reset()
-            logger.debug("Could not parse message: Not complete")
             return None
         else:
             try:
                 if id == 2:
-                    logger.debug("Message is NetworkDataContainerMessage! Uncompressing...")
                     newbuffer = Buffer(data.readByteArray())
                     newbuffer.uncompress()
                     msg = Msg.fromRaw(newbuffer, from_client)
                     assert msg is not None and not newbuffer.remaining()
                     return msg
                 if not (id in protocol.msg_from_id):
-                    logger.debug("No msg for id %s", str(id))
                     return
-                logger.debug("Parsed %s", protocol.msg_from_id[id]["name"])
                 buf.end()
     
                 return Msg(id, data, count)
             except:
                 buf.pos = 0
                 #buf.reset()
-                logger.debug("Could not parse message: Not complete")
                 return None
 
     def lenlenData(self):
@@ -102,10 +92,12 @@ class Msg:
         return protocol.msg_from_id[self.id]
 
     def json(self):
-        logger.debug("Getting json representation of message %s", self)
-        if not hasattr(self, "parsed"):
-            self.parsed = protocol.read(self.msgType, self.data)
-        return self.parsed
+        try:
+            if not hasattr(self, "parsed"):
+                self.parsed = protocol.read(self.msgType, self.data)
+            return self.parsed
+        except IndexError:
+            return None
 
     @staticmethod
     def from_json(json, count=None, random_hash=True):

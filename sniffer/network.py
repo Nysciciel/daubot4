@@ -25,25 +25,22 @@ import threading
 from select import select
 import errno
 
-#from scapy.all import plist, conf
+# from scapy.all import plist, conf
 from scapy.all import conf
 from scapy import plist
 from scapy.data import ETH_P_ALL, MTU
 from scapy.consts import WINDOWS
 
-import logging
-logger = logging.getLogger("labot")
-
 
 def sniff(
-    store=False,
-    prn=None,
-    lfilter=None,
-    stop_event=None,
-    refresh=0.1,
-    offline=None,
-    *args,
-    **kwargs
+        store=False,
+        prn=None,
+        lfilter=None,
+        stop_event=None,
+        refresh=0.1,
+        offline=None,
+        *args,
+        **kwargs
 ):
     """Sniff packets
 sniff([count=0,] [prn=None,] [store=1,] [offline=None,] [lfilter=None,] + L2ListenSocket args)
@@ -68,7 +65,6 @@ stop_event : None or Event
 refresh : float
     check stop_event.set() every `refresh` seconds
     """
-    logger.debug("Setting up sniffer...")
     if offline is None:
         L2socket = conf.L2listen
         s = L2socket(type=ETH_P_ALL, *args, **kwargs)
@@ -77,9 +73,9 @@ refresh : float
 
     # on Windows, it is not possible to select a L2socket
     if WINDOWS:
-        #from scapy.arch.pcapdnet import PcapTimeoutElapsed
+        # from scapy.arch.pcapdnet import PcapTimeoutElapsed
 
-        read_allowed_exceptions = ()#PcapTimeoutElapsed,)
+        read_allowed_exceptions = ()  # PcapTimeoutElapsed,)
 
         def _select(sockets):
             return sockets
@@ -98,17 +94,14 @@ refresh : float
 
     lst = []
     try:
-        logger.debug("Started Sniffing")
         while True:
             if stop_event and stop_event.is_set():
-                logger.debug("stop_event")
                 break
             sel = _select([s])
             if s in sel:
                 try:
                     p = s.recv(MTU)
                 except Exception as exception:
-                    logger.debug(type(exception).__name__)
                     # could add a sleep(refresh) if the CPU usage
                     # is too much on windows
                     continue
@@ -125,7 +118,6 @@ refresh : float
     except KeyboardInterrupt:
         pass
     finally:
-        logger.debug("Stopped sniffing.")
         s.close()
 
     return plist.PacketList(lst, "Sniffed")
@@ -157,18 +149,12 @@ LOCAL_IP = get_local_ip()
 
 def from_client(pa):
     try:
-        logger.debug("Determining packet origin...")
         dst = pa.getlayer(IP).dst
         src = pa.getlayer(IP).src
         if src == LOCAL_IP:
-            logger.debug("Packet comes from local machine")
             return True
         elif dst == LOCAL_IP:
-            logger.debug("Packet comes from server")
             return False
-        logger.error(
-            "Packet origin unknown\nsrc: %s\ndst: %s\nLOCAL_IP: %s", src, dst, LOCAL_IP
-        )
         assert False, "Packet origin unknown"
     except:
         assert False, "Error determining packet origin"
@@ -183,7 +169,6 @@ def on_receive(pa, action):
     Parse the messages from that buffer
     Calls action on that buffer
     """
-    logger.debug("Received packet. ")
     try:
         direction = from_client(pa)
     except:
@@ -192,7 +177,7 @@ def on_receive(pa, action):
     buf += raw(pa)
     msg = Msg.fromRaw(buf, direction)
     while msg:
-        action(msg)
+        action(msg.json())
         msg = Msg.fromRaw(buf, direction)
 
 
@@ -201,8 +186,6 @@ def launch_in_thread(action, capture_file=None):
     When a packet is received, calls action
     Returns a stop function
     """
-
-    logger.debug("Launching sniffer in thread...")
 
     def _sniff(stop_event):
         if capture_file:
@@ -220,7 +203,6 @@ def launch_in_thread(action, capture_file=None):
                 stop_event=stop_event,
                 prn=lambda p: on_receive(p, action),
             )
-        logger.info("sniffing stopped")
 
     e = threading.Event()
     t = threading.Thread(target=_sniff, args=(e,))
@@ -229,9 +211,7 @@ def launch_in_thread(action, capture_file=None):
     def stop():
         e.set()
 
-    logger.debug("Started sniffer in new thread")
-
-    return stop
+    return stop, t
 
 
 def on_msg(msg):

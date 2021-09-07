@@ -1,5 +1,4 @@
 from functools import reduce
-import logging
 import random
 from zlib import decompress
 
@@ -7,7 +6,6 @@ from sniffer.protocol_load import types, msg_from_id, types_from_id, primitives
 from sniffer.binrw import Data, Buffer
 
 
-logger = logging.getLogger("labot")
 
 primitives = {
     name: (getattr(Data, "read" + name), getattr(Data, "write" + name))
@@ -46,22 +44,16 @@ def read(type, data: Data):
         if type in primitives:
             return primitives[type][0](data)
         type = types[type]
-    logger.debug("reading data %s", data)
-    logger.debug("with type %s", type)
 
     if type["parent"] is not None:
-        logger.debug("calling parent %s", type["parent"])
         ans = read(type["parent"], data)
         ans["__type__"] = type["name"]
     else:
         ans = dict(__type__=type["name"])
 
-    logger.debug("reading boolean variables")
     ans.update(readBooleans(type["boolVars"], data))
-    logger.debug("remaining data: %s", data.data[data.pos :])
 
     for var in type["vars"]:
-        logger.debug("reading %s", var)
         if var["optional"]:
             if not data.readByte():
                 continue
@@ -69,7 +61,6 @@ def read(type, data: Data):
             ans[var["name"]] = readVec(var, data)
         else:
             ans[var["name"]] = read(var["type"], data)
-        logger.debug("remaining data: %s", data.data[data.pos :])
     if type["hash_function"] and data.remaining() == 48:
         ans["hash_function"] = data.read(48)
     return ans
