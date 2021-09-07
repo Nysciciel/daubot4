@@ -5,10 +5,9 @@ import pyperclip
 import logging
 import os
 
-
 lok = threading.Lock()
 status = HuntStatus(lok)
-lok.acquire(blocking=True, timeout=-1)
+lok.acquire(blocking=True, timeout=3)
 
 os.remove("messages.log")
 logging.basicConfig(filename="messages.log", level=logging.INFO, format='%(message)s')
@@ -18,7 +17,9 @@ if __name__ == "__main__":
     t = SnifferThread(status.handleMessage)
     try:
         while t.is_alive():
-            lok.acquire(blocking=True, timeout=-1)
+
+            lok.acquire(blocking=True, timeout=3)
+
             pyperclip.copy(status.currentStep.endMap.travelStr())
             if status.time_to_fight():
                 todo = "fight"
@@ -30,9 +31,9 @@ if __name__ == "__main__":
                 if status.pho_location is not None:
                     todo = "go to:" + str(status.pho_location)
                 else:
-                    todo = "search pho "+str(status.currentStep.dir_str())
+                    todo = "search pho " + str(status.currentStep.dir_str())
             elif not status.currentStep.endMap.isUnknown() and status.currentStep.endMap:
-                todo = "go to:"+str(status.currentStep.endMap)
+                todo = "go to:" + str(status.currentStep.endMap)
             else:
                 todo = "lost"
             print(todo)
