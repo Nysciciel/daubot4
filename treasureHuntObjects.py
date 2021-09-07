@@ -1,7 +1,7 @@
 import json
 
 from daufousMap import getIndiceCoordFromMapId, getIndiceCoord
-import pyperclip
+
 
 
 def init_mapToCoordDict():
@@ -97,13 +97,12 @@ class Map:
         return self.__str__()
 
     def __eq__(self, other):
-        try:
-            return self.coord == other.coord
-        except AttributeError:
+        if not self or not other:
             return False
+        return self.coord == other.coord
 
     def __bool__(self):
-        return self.id is not None
+        return self.id is not None and not self.isUnknown()
 
     def travelStr(self):
         if self:
@@ -223,7 +222,7 @@ class HuntStatus:
         return self.__str__()
 
     def reset(self):
-        self.__init__()
+        self.__init__(self.lok)
 
     @property
     def currentStep(self):
@@ -240,7 +239,7 @@ class HuntStatus:
 
     def time_to_flag(self):
         if self.currentStep.indice.isPhorreur():
-            return self.pos == self.pho_location
+            return self.pos == self.pho_location if self.pos else False
         return self.pos == self.currentStep.endMap
 
     def is_phorreur(self):
@@ -300,8 +299,5 @@ class HuntStatus:
                                         lost = True
                                 else:
                                     current_map = s.endMap
-            #print(msg)
-            #print(self)
-            #print(self.currentStep.endMap)
+            print(self)
             self.lok.release()
-            pyperclip.copy(self.currentStep.endMap.travelStr())

@@ -2,6 +2,7 @@ import time
 import threading
 from sniffer.sniffer import SnifferThread
 from treasureHuntObjects import HuntStatus
+import pyperclip
 
 lok = threading.Lock()
 status = HuntStatus(lok)
@@ -13,6 +14,7 @@ if __name__ == "__main__":
     try:
         while t.is_alive():
             lok.acquire(blocking=True, timeout=-1)
+            pyperclip.copy(status.currentStep.endMap.travelStr())
             if status.time_to_fight():
                 todo = "fight"
             elif status.time_to_validate():
