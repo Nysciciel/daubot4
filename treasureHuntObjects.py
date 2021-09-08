@@ -224,6 +224,8 @@ class HuntStatus:
         self.startPos = None
         self.pho_location = None
         self.pho_analysed = True
+        self.retries = None
+        self.normalHunt = True
 
     def __str__(self):
         return ('Current Position:' + str(self.pos) + "\n" +
@@ -286,6 +288,8 @@ class HuntStatus:
             self.nIndice = msg['totalStepCount']
             self.maxCheckPoint = msg['checkPointTotal']
             self.currentCheckPoint = msg['checkPointCurrent'] + 1
+            self.retries = msg['availableRetryCount']
+            self.normalHunt = msg['questType'] == 0
             if self.maxCheckPoint == self.currentCheckPoint:
                 self.stepList = []
                 self.flags = []

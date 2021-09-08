@@ -98,6 +98,11 @@ def goto(status, lok):
     press('enter')
     time.sleep(0.5)
     press('enter')
+    time.sleep(0.5)
+    press('enter')
+    time.sleep(0.5)
+    press('enter')
+    time.sleep(0.5)
     press('escape')
     lok.acquire(blocking=True, timeout=3)
     while status.pos != status.currentStep.endMap:
@@ -116,6 +121,21 @@ def locate(img, confidence=0.95):
 
 def getFlag():
     return locate("imgs/flag.jpg")
+
+
+def currentlyHunting():
+    return getFlag() is not None
+
+
+def unStuckHunt(status, lok):
+    while not status.exists:
+        x, y = getFlag()
+        click(x, y)
+        time.sleep(3)
+        click(x, y)
+        if not status.exists:
+            print('Move manually to another map')
+            lok.acquire(blocking=True, timeout=-1)
 
 
 def validateIndice():
@@ -141,8 +161,11 @@ def validateEtape():
 def validate(status, lok):
     print('validate')
     currentCheckPoint = status.currentCheckPoint
+    retries = status.retries
     validateEtape()
     lok.acquire(blocking=True, timeout=3)
     while status.currentCheckPoint == currentCheckPoint:
+        if status.retries != retries:
+            assert False, "Dofus Map Error"
         lok.acquire(blocking=True, timeout=3)
         print("waiting flag next checkpoint")
