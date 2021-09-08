@@ -1,15 +1,16 @@
 import json
-from datetime import datetime
 from daufousMap import getIndiceCoordFromMapId, getIndiceCoord
 import logging
-import time
 
-
-def release(lokkk):
-    try:
-        lokkk.release()
-    except RuntimeError:
-        pass
+msg_list = ['SetCharacterRestrictionsMessage',
+            "CurrentMapMessage",
+            "MapComplementaryInformationsDataMessage",
+            'TreasureHuntFinishedMessage',
+            "TreasureHuntMessage",
+            'TreasureHuntFlagRequestMessage',
+            "TreasureHuntFlagRemoveRequestMessage",
+            'ChangeMapMessage',
+            'GameMapMovementConfirmMessage']
 
 
 def init_mapToCoordDict():
@@ -182,6 +183,9 @@ class Step:
             if not coord:
                 if startMap.coord is not None:
                     coord = getIndiceCoord(indice.name, *startMap.coord, direction)
+                    if coord is None:
+                        self.endMap = UnknowMap()
+                        return
                 else:
                     self.endMap = UnknowMap()
                     return
@@ -223,7 +227,6 @@ class HuntStatus:
         self.pos = None
         self.startPos = None
         self.pho_location = None
-        self.pho_analysed = True
         self.retries = None
         self.normalHunt = True
 
@@ -231,6 +234,7 @@ class HuntStatus:
         return ('Current Position:' + str(self.pos) + "\n" +
                 "Checkpoint:" + str(self.currentCheckPoint) + "/" + str(self.maxCheckPoint) + "\n" +
                 'Start map:' + str(self.startPos) + "\n" +
+                'Indices number:' + str(self.nIndice) + "\n" +
                 ''.join([str(step) + "\n" for step in self.stepList]))
 
     def __repr__(self):
@@ -264,22 +268,20 @@ class HuntStatus:
 
         if msg is None:
             return
-        current_time = datetime.now().strftime("%H:%M:%S")
-        logging.info(current_time + str(msg))
-        if msg['__type__'] == 'SetCharacterRestrictionsMessage':
-            release(self.lok)
+        if msg['__type__'] in msg_list:
+            logging.info(str(msg))
+        else:
+            logging.debug(str(msg))
         if msg['__type__'] == "CurrentMapMessage":
             self.pos = Map(id=msg['mapId'])
+        if msg['__type__'] == "ChangeMapMessage":
+            self.pos = Map(id=msg['mapId'])
         if msg['__type__'] == "MapComplementaryInformationsDataMessage":
-            if not self.currentStep.indice.isPhorreur:
-                return
             for actor in msg['actors']:
                 if "npcId" in actor:
                     if (actor["npcId"] == self.currentStep.indice.id) and (
                             actor["__type__"] == 'GameRolePlayTreasureHintInformations'):
                         self.pho_location = self.pos.copy()
-                        release(self.lok)
-            self.pho_analysed = True
         if msg['__type__'] == 'TreasureHuntFinishedMessage':
             self.reset()
         if msg['__type__'] == "TreasureHuntMessage":
@@ -304,14 +306,15 @@ class HuntStatus:
                         if index >= len(msg['knownStepsList']):
                             self.stepList.append(Step(startMap=current_map))
                             current_map = UnknowMap()
-                            continue
-                        step_json = msg['knownStepsList'][index]
-                        s = Step().init_from_json(step_json, current_map)
-                        self.stepList.append(s)
-                        if s.indice.isPhorreur() and index < len(self.flags):
-                            current_map = self.flags[index]
                         else:
-                            current_map = s.endMap
-
-            print(self)
-            release(self.lok)
+                            step_json = msg['knownStepsList'][index]
+                            s = Step().init_from_json(step_json, current_map)
+                            if s.endMap.isUnknown() and index < len(msg['flags']):
+                                s.endMap = Map(id=msg['flags'][index - 1]['mapId'])
+                            self.stepList.append(s)
+                            if s.indice.isPhorreur() and index < len(self.flags):
+                                current_map = self.flags[index]
+                            else:
+                                current_map = s.endMap
+        if msg['__type__'] in self.lok.lock_dict:
+            self.lok.release(msg['__type__'])

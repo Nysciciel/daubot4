@@ -1,63 +1,61 @@
-import threading
+from locks import LockManager
 from sniffer.sniffer import SnifferThread
 from treasureHuntObjects import *
 from daufousMap import *
-import pyperclip
 import logging
 import os
 from controls import *
-import time
 
-lok = threading.Lock()
+lok = LockManager()
 status = HuntStatus(lok)
 
-os.remove("messages.log")
-logging.basicConfig(filename="messages.log", level=logging.INFO, format='%(message)s')
+try:
+    os.remove("messages.log")
+except FileNotFoundError:
+    pass
+logging.basicConfig(filename="messages.log", level=logging.INFO, format='%(asctime)s - %(message)s')
 
 if __name__ == "__main__":
 
-    t = SnifferThread(print)
-    while True:
-        time.sleep(1)
-
     t = SnifferThread(status.handleMessage)
     try:
-        print("Started")
+
         while t.is_alive():
 
             if not status.exists:
-                print("doesnt exist")
-                lok.acquire(blocking=True, timeout=1)
                 if not currentlyHunting():
-                    print("really doesnt exist")
-                    continue
+                    # prendre chasse et sortir
+                    assert False, "Hunt really doesnt exist"
                 else:
-                    print("actually exist")
                     unStuckHunt(status, lok)
+                print("goto start")
+                # assert False
             elif status.time_to_fight():
+                lok.prepare_to_wait('TreasureHuntFinishedMessage')
                 print("fight")
-                lok.acquire(blocking=True, timeout=1)
-                continue
+                lok.acquire('TreasureHuntFinishedMessage')
+                print("fight done")
             elif status.time_to_validate():
                 validate(status, lok)
             elif status.time_to_flag():
                 flag(status, lok)
             elif status.is_phorreur():
                 coord = status.currentStep.startMap.coord
-                while status.pho_location is None:
-                    while not status.pho_analysed:
-                        lok.acquire(blocking=True, timeout=1)
+                while True:
                     if status.pho_location is not None:
-                        status.pho_analysed = True
+                        print("pho found at " + str(status.pho_location))
+                        status.currentStep.endMap = status.pho_location
                         goto(status, lok)
                         break
                     else:
                         coord = getMinDistCoord(*coord, status.currentStep.direction)
                         status.currentStep.endMap = Map(coord=coord)
-                        status.pho_analysed = False
                         goto(status, lok)
+                        lok.acquire("MapComplementaryInformationsDataMessage")
             elif not status.currentStep.endMap.isUnknown() and status.currentStep.endMap:
                 goto(status, lok)
+            else:
+                abandon()
 
     finally:
         t.stop()

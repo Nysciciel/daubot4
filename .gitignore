@@ -3,3 +3,4 @@
 /__pycache__/
 /sniffer/__pycache__/
 /messages.log
+/test_messages.py

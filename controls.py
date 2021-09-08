@@ -1,16 +1,15 @@
 import pyperclip
-import win32com.client
 import win32gui
-import win32api
-import win32con
-from time import sleep
 import cv2
 import numpy as np
-import time
 import win32ui
 from PIL import Image
 from ctypes import windll
 import pyautogui
+from time import sleep
+
+paste_pause = press_pause = click_pause = 0.7
+goto_pause = 3
 
 
 def getDofusWindow():
@@ -24,23 +23,26 @@ def getDofusWindow():
 def waitForDofus():
     dofWin = getDofusWindow()
     while not win32gui.GetForegroundWindow() == dofWin:
-        if not ((win32gui.GetWindowText(dofWin), dofWin) in enumerateWindows()):
-            raise NameError("Allume Dofus C.O.N.N.A.R.D")
+        sleep(3)
 
 
 def paste():
     waitForDofus()
     pyautogui.hotkey("ctrl", "v")
+    sleep(paste_pause)
 
 
 def press(key):
     waitForDofus()
     pyautogui.press(key)
+    sleep(press_pause)
 
 
 def click(x, y):
     waitForDofus()
-    pyautogui.click(x, y)
+    dx, dy, _, _ = win32gui.GetWindowRect(getDofusWindow())
+    pyautogui.click(x + dx, y + dy)
+    sleep(click_pause)
 
 
 def screenshot():
@@ -90,32 +92,38 @@ def enumerateWindows():
 
 
 def goto(status, lok):
+    if status.pos == status.currentStep.endMap:
+        return
     print("from " + str(status.pos) + " to " + str(status.currentStep.endMap))
     press('space')
     pyperclip.copy(status.currentStep.endMap.travelStr())
     paste()
-    time.sleep(0.5)
     press('enter')
-    time.sleep(0.5)
+    lok.prepare_to_wait("MapComplementaryInformationsDataMessage")
     press('enter')
-    time.sleep(0.5)
-    press('enter')
-    time.sleep(0.5)
-    press('enter')
-    time.sleep(0.5)
     press('escape')
-    lok.acquire(blocking=True, timeout=3)
-    while status.pos != status.currentStep.endMap:
-        lok.acquire(blocking=True, timeout=3)
-        print("waiting to be at" + str(status.currentStep.endMap) + " currently at " + str(status.pos))
+    while True:
+        while status.pos != status.currentStep.endMap:
+            lok.prepare_to_wait("CurrentMapMessage")
+            lok.prepare_to_wait("SetCharacterRestrictionsMessage")
+            print("waiting to be at" + str(status.currentStep.endMap) + " currently at " + str(status.pos))
+            lok.prepare_to_wait("MapComplementaryInformationsDataMessage")
+            lok.acquire("CurrentMapMessage")
+            lok.acquire("SetCharacterRestrictionsMessage")
+        print("arrived at" + str(status.pos))
+        lok.prepare_to_wait("GameMapMovementConfirmMessage")
+        if not lok.acquire("GameMapMovementConfirmMessage", 0):
+            break
+    sleep(goto_pause)
 
 
 def locate(img, confidence=0.95):
-    res = cv2.matchTemplate(screenshot(), cv2.imread(img), cv2.TM_SQDIFF_NORMED)
+    im = cv2.imread(img)
+    res = cv2.matchTemplate(screenshot(), im, cv2.TM_SQDIFF_NORMED)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
     x, y = min_loc
     if min_val < 1 - confidence:
-        return x, y
+        return x + im.shape[0] // 2, y + im.shape[1] // 2
     return None
 
 
@@ -128,14 +136,24 @@ def currentlyHunting():
 
 
 def unStuckHunt(status, lok):
+    print('Trying to detect hunt')
     while not status.exists:
         x, y = getFlag()
+        lok.prepare_to_wait('TreasureHuntMessage')
         click(x, y)
-        time.sleep(3)
-        click(x, y)
-        if not status.exists:
+        if not lok.acquire('TreasureHuntMessage', 2):
+            lok.prepare_to_wait("CurrentMapMessage")
+            lok.prepare_to_wait("SetCharacterRestrictionsMessage")
             print('Move manually to another map')
-            lok.acquire(blocking=True, timeout=-1)
+            lok.acquire("CurrentMapMessage")
+            lok.acquire("SetCharacterRestrictionsMessage")
+            sleep(goto_pause)
+        else:
+            lok.prepare_to_wait("TreasureHuntFlagRemoveRequestMessage")
+            lok.prepare_to_wait("TreasureHuntMessage")
+            click(x, y)
+            lok.acquire('TreasureHuntFlagRemoveRequestMessage')
+            lok.acquire("TreasureHuntMessage")
 
 
 def validateIndice():
@@ -145,12 +163,14 @@ def validateIndice():
 
 def flag(status, lok):
     print('flag')
-    index = len(status.flags)
+    flags = len(status.flags)
+    lok.prepare_to_wait("TreasureHuntFlagRequestMessage")
+    lok.prepare_to_wait("TreasureHuntMessage")
     validateIndice()
-    lok.acquire(blocking=True, timeout=3)
-    while len(status.flags) == index:
-        lok.acquire(blocking=True, timeout=3)
-        print("waiting flag validation")
+    lok.acquire('TreasureHuntFlagRequestMessage')
+    lok.acquire("TreasureHuntMessage")
+    if flags == len(status.flags):
+        print("Can't place here twice, map messed up")
 
 
 def validateEtape():
@@ -160,12 +180,16 @@ def validateEtape():
 
 def validate(status, lok):
     print('validate')
-    currentCheckPoint = status.currentCheckPoint
     retries = status.retries
+    lok.prepare_to_wait("TreasureHuntMessage")
     validateEtape()
-    lok.acquire(blocking=True, timeout=3)
-    while status.currentCheckPoint == currentCheckPoint:
-        if status.retries != retries:
-            assert False, "Dofus Map Error"
-        lok.acquire(blocking=True, timeout=3)
-        print("waiting flag next checkpoint")
+    lok.acquire("TreasureHuntMessage")
+    if status.retries != retries:
+        assert False, "Dofus Map Error"
+
+
+def abandon():
+    print("abandon")
+    sleep(60 * 10)
+    click(*locate("imgs/abandon.jpg"))
+    press("enter")
