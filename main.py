@@ -27,8 +27,7 @@ if __name__ == "__main__":
         while t.is_alive():
             if not status.exists:
                 if not currentlyHunting():
-                    # prendre chasse et sortir
-                    assert False, "Hunt really doesnt exist"
+                    take_hunt(lok)
                 else:
                     unStuckHunt(status, lok)
                 goto_start(status, lok)
