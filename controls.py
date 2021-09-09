@@ -143,7 +143,11 @@ def getFlag():
 
 
 def currentlyHunting():
-    return getFlag() is not None
+    return locate("imgs/abandon.jpg") is not None
+
+
+def currentlyHuntingNoFight():
+    return locate("imgs/flag.jpg") is not None
 
 
 def unStuckHunt(status, lok):

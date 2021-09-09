@@ -9,7 +9,6 @@ import pygame
 pygame.mixer.init()
 pygame.mixer.music.load("alert.wav")
 
-
 lok = LockManager()
 status = HuntStatus(lok)
 
@@ -29,8 +28,10 @@ if __name__ == "__main__":
                 if not currentlyHunting():
                     # prendre chasse et sortir
                     assert False, "Hunt really doesnt exist"
-                else:
+                elif currentlyHuntingNoFight():
                     unStuckHunt(status, lok)
+                if not status.exists:
+                    assert False, "Can't start at fight"
                 goto_start(status, lok)
             elif status.time_to_fight():
                 lok.prepare_to_wait('TreasureHuntFinishedMessage')
