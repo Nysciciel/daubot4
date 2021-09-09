@@ -4,6 +4,10 @@ from treasureHuntObjects import *
 import logging
 import os
 from controls import *
+import pygame
+pygame.mixer.init()
+pygame.mixer.music.load("alert.wav")
+
 
 lok = LockManager()
 status = HuntStatus(lok)
@@ -29,6 +33,7 @@ if __name__ == "__main__":
                     unStuckHunt(status, lok)
                 goto_start(status, lok)
             elif status.time_to_fight():
+                pygame.mixer.music.play()
                 lok.prepare_to_wait('TreasureHuntFinishedMessage')
                 print("fight")
                 lok.acquire('TreasureHuntFinishedMessage')
@@ -41,7 +46,6 @@ if __name__ == "__main__":
                 coord = status.currentStep.startMap.coord
                 while True:
                     if status.pho_location is not None:
-                        print("pho found at " + str(status.pho_location))
                         status.currentStep.endMap = status.pho_location
                         goto(status, lok)
                         break
@@ -53,6 +57,7 @@ if __name__ == "__main__":
             elif not status.currentStep.endMap.isUnknown() and status.currentStep.endMap:
                 goto(status, lok)
             else:
+                pygame.mixer.music.play()
                 abandon()
 
     finally:

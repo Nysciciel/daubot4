@@ -1,6 +1,9 @@
 import threading
 from treasureHuntObjects import msg_list
+import pygame
 
+pygame.mixer.init()
+pygame.mixer.music.load("alert.wav")
 
 class LockManager:
     def __init__(self):
@@ -9,12 +12,13 @@ class LockManager:
     def release(self, msg):
         self.lock_dict[msg].set()
 
-    def acquire(self, msg, timeout=None):
+    def acquire(self, msg, timeout=10):
         print("Acquired " + msg)
-        ret = self.lock_dict[msg].wait(timeout)
+        if not self.lock_dict[msg].wait(timeout):
+            pygame.mixer.music.play()
+            assert False, "Lock ran out"
         self.lock_dict[msg].clear()
         print("Released " + msg)
-        return ret
 
     def prepare_to_wait(self, msg):
         self.lock_dict[msg].clear()
