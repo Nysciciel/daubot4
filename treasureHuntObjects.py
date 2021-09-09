@@ -12,7 +12,9 @@ msg_list = ['SetCharacterRestrictionsMessage',
             'GameMapMovementConfirmMessage',
             "EnterHavenBagRequestMessage",
             "ZaapDestinationsMessage",
-            "MapInformationsRequestMessage"]
+            "MapInformationsRequestMessage",
+            "NpcDialogQuestionMessage",
+            "LeaveDialogRequestMessage"]
 
 
 def PoiIdToName(idd):
@@ -32,7 +34,7 @@ def coordinatesFromMapId(idd):
 def mapIdFromCoord(coord):
     try:
         return \
-            (lambda dic, value: [item[0] for item in list(dic.items()) if (item[1] == value)]) \
+            (lambda dicc, val: [item[0] for item in list(dicc.items()) if (item[1] == val)]) \
                 (mapIdToCoord, list(coord))[0]
     except (TypeError, IndexError):
         return None
@@ -41,9 +43,7 @@ def mapIdFromCoord(coord):
 class Map:
 
     def __init__(self, **kwargs):
-        if "coord" in kwargs:
-            self.coord = kwargs["coord"]
-        elif "id" in kwargs:
+        if "id" in kwargs:
             self.id = kwargs["id"]
         else:
             self._coord = (None, None)
@@ -79,7 +79,7 @@ class Map:
         return self.coord == other.coord
 
     def __bool__(self):
-        return self.id is not None and not self.isUnknown()
+        return not self.isUnknown()
 
     def travelStr(self):
         if self:
@@ -87,13 +87,13 @@ class Map:
         return ''
 
     def isUnknown(self):
-        return False
+        return self.coord == (None, None) or self.id is None
 
     def copy(self):
         return Map(id=self.id)
 
     def __sub__(self, other):
-        if self.coord is None or other.coord is None:
+        if self.coord is None or other.id is None:
             return float('inf')
         return abs(self.coord[0] - other.coord[0]) + abs(self.coord[1] - other.coord[1])
 
@@ -152,17 +152,17 @@ class Step:
         if self.startMap.isUnknown() or indice.isPhorreur():
             self.endMap = UnknowMap()
         else:
-            coord = getIndiceCoordFromMapId(indice.name, startMap.id, direction)
-            if not coord:
+            mapId = getIndiceMapId(indice.name, startMap.id, direction)
+            if not mapId:
                 if startMap.coord is not None:
-                    coord = getIndiceCoord(indice.name, *startMap.coord, direction)
-                    if coord is None:
+                    mapId = getIndiceMapId(indice.name, startMap.id, direction)
+                    if mapId is None:
                         self.endMap = UnknowMap()
                         return
                 else:
                     self.endMap = UnknowMap()
                     return
-            self.endMap = Map(coord=coord)
+            self.endMap = Map(id=mapId)
 
     def init_from_json(self, indice_json, mapp):
         direction = {0: 'right', 6: 'top', 4: 'left', 2: 'bottom'}[indice_json['direction']]
@@ -247,17 +247,27 @@ class HuntStatus:
         else:
             logging.debug(str(msg))
         if msg['__type__'] == "CurrentMapMessage":
-            self.pos = Map(id=msg['mapId'])
+            newMap = Map(id=msg['mapId'])
+            if not newMap.isUnknown():
+                self.pos = Map(id=msg['mapId'])
         if msg['__type__'] == "ChangeMapMessage":
-            self.pos = Map(id=msg['mapId'])
+            newMap = Map(id=msg['mapId'])
+            if not newMap.isUnknown():
+                self.pos = Map(id=msg['mapId'])
         if msg['__type__'] == "MapInformationsRequestMessage":
-            self.pos = Map(id=msg['mapId'])
+            newMap = Map(id=msg['mapId'])
+            if not newMap.isUnknown():
+                self.pos = Map(id=msg['mapId'])
         if msg['__type__'] == "MapComplementaryInformationsDataMessage":
+            newMap = Map(id=msg['mapId'])
+            if not newMap.isUnknown():
+                self.pos = Map(id=msg['mapId'])
             for actor in msg['actors']:
                 if "npcId" in actor:
                     if (actor["npcId"] == self.currentStep.indice.id) and (
                             actor["__type__"] == 'GameRolePlayTreasureHintInformations'):
                         self.pho_location = self.pos.copy()
+                        print("pho found at " + str(self.pho_location))
         if msg['__type__'] == 'TreasureHuntFinishedMessage':
             self.reset()
         if msg['__type__'] == 'ZaapDestinationsMessage':
@@ -287,12 +297,11 @@ class HuntStatus:
                         else:
                             step_json = msg['knownStepsList'][index]
                             s = Step().init_from_json(step_json, current_map)
-                            if s.endMap.isUnknown() and index < len(msg['flags']):
-                                s.endMap = Map(id=msg['flags'][index - 1]['mapId'])
-                            self.stepList.append(s)
-                            if s.indice.isPhorreur() and index < len(self.flags):
+                            if (s.indice.isPhorreur() or s.endMap.isUnknown()) and index < len(self.flags):
                                 current_map = self.flags[index]
                             else:
                                 current_map = s.endMap
+                            self.stepList.append(s)
+            print(self)
         if msg['__type__'] in self.lok.lock_dict:
             self.lok.release(msg['__type__'])

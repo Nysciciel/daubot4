@@ -5,6 +5,7 @@ import logging
 import os
 from controls import *
 import pygame
+
 pygame.mixer.init()
 pygame.mixer.music.load("alert.wav")
 
@@ -16,7 +17,7 @@ try:
     os.remove("messages.log")
 except FileNotFoundError:
     pass
-logging.basicConfig(filename="messages.log", level=logging.INFO, format='%(asctime)s - %(message)s')
+logging.basicConfig(filename="messages.log", level=logging.DEBUG, format='%(asctime)s - %(message)s')
 
 if __name__ == "__main__":
 
@@ -24,7 +25,6 @@ if __name__ == "__main__":
     try:
 
         while t.is_alive():
-
             if not status.exists:
                 if not currentlyHunting():
                     # prendre chasse et sortir
@@ -33,7 +33,6 @@ if __name__ == "__main__":
                     unStuckHunt(status, lok)
                 goto_start(status, lok)
             elif status.time_to_fight():
-                pygame.mixer.music.play()
                 lok.prepare_to_wait('TreasureHuntFinishedMessage')
                 print("fight")
                 lok.acquire('TreasureHuntFinishedMessage')
@@ -43,23 +42,29 @@ if __name__ == "__main__":
             elif status.time_to_flag():
                 flag(status, lok)
             elif status.is_phorreur():
-                coord = status.currentStep.startMap.coord
+                mapId = status.currentStep.startMap.id
+                print(status.currentStep.startMap)
                 while True:
                     if status.pho_location is not None:
                         status.currentStep.endMap = status.pho_location
                         goto(status, lok)
                         break
                     else:
-                        coord = getMinDistCoord(*coord, status.currentStep.direction)
-                        status.currentStep.endMap = Map(coord=coord)
+                        mapId = getMinDistCoord(mapId, status.currentStep.direction)
+                        print(status, mapId)
+                        if Map(id=mapId) in status.flags:
+                            continue
+                        status.currentStep.endMap = Map(id=mapId)
                         goto(status, lok)
                         lok.acquire("MapComplementaryInformationsDataMessage")
-            elif not status.currentStep.endMap.isUnknown() and status.currentStep.endMap:
+            elif status.currentStep.endMap:
+                print("BITE", status)
                 goto(status, lok)
             else:
-                pygame.mixer.music.play()
                 abandon()
 
     finally:
+        pygame.mixer.music.play()
+        sleep(1)
         t.stop()
         print("Sniffing stopped")
