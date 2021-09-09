@@ -8,6 +8,9 @@ from ctypes import windll
 import pyautogui
 from time import sleep
 
+from daufousMap import *
+from treasureHuntObjects import Map
+
 paste_pause = press_pause = click_pause = 0.7
 goto_pause = 3
 
@@ -28,6 +31,7 @@ def waitForDofus():
 
 def paste():
     waitForDofus()
+    sleep(paste_pause)
     pyautogui.hotkey("ctrl", "v")
     sleep(paste_pause)
 
@@ -102,18 +106,14 @@ def goto(status, lok):
     lok.prepare_to_wait("MapComplementaryInformationsDataMessage")
     press('enter')
     press('escape')
-    while True:
-        while status.pos != status.currentStep.endMap:
-            lok.prepare_to_wait("CurrentMapMessage")
-            lok.prepare_to_wait("SetCharacterRestrictionsMessage")
-            print("waiting to be at" + str(status.currentStep.endMap) + " currently at " + str(status.pos))
-            lok.prepare_to_wait("MapComplementaryInformationsDataMessage")
-            lok.acquire("CurrentMapMessage")
-            lok.acquire("SetCharacterRestrictionsMessage")
-        print("arrived at" + str(status.pos))
-        lok.prepare_to_wait("GameMapMovementConfirmMessage")
-        if not lok.acquire("GameMapMovementConfirmMessage", 0):
-            break
+    while status.pos != status.currentStep.endMap:
+        lok.prepare_to_wait("CurrentMapMessage")
+        lok.prepare_to_wait("SetCharacterRestrictionsMessage")
+        print("waiting to be at" + str(status.currentStep.endMap) + " currently at " + str(status.pos))
+        lok.prepare_to_wait("MapComplementaryInformationsDataMessage")
+        lok.acquire("CurrentMapMessage")
+        lok.acquire("SetCharacterRestrictionsMessage")
+    print("arrived at" + str(status.pos))
     sleep(goto_pause)
 
 
@@ -137,6 +137,7 @@ def currentlyHunting():
 
 def unStuckHunt(status, lok):
     print('Trying to detect hunt')
+    enter_haven(lok)
     while not status.exists:
         x, y = getFlag()
         lok.prepare_to_wait('TreasureHuntMessage')
@@ -154,6 +155,8 @@ def unStuckHunt(status, lok):
             click(x, y)
             lok.acquire('TreasureHuntFlagRemoveRequestMessage')
             lok.acquire("TreasureHuntMessage")
+    press('h')
+    sleep(goto_pause)
 
 
 def validateIndice():
@@ -193,3 +196,53 @@ def abandon():
     sleep(60 * 10)
     click(*locate("imgs/abandon.jpg"))
     press("enter")
+
+
+def goto_start(status, lok):
+    if status.pos == status.currentStep.startMap:
+        return
+    print("at ", str(status.pos), " need to be at ", str(status.currentStep.startMap))
+    x, y = status.currentStep.startMap.coord
+    if x <= -42 and y <= -20:
+        assert False, "frigost"
+    enter_haven(lok)
+    click_zap(lok)
+    min_dist = float('inf')
+    area_id = None
+    for dest in status.zaap_dest:
+        dist = Map(id=dest['mapId']) - status.currentStep.startMap
+        if dist < min_dist:
+            min_dist = dist
+            area_id = dest['subAreaId']
+    if status.pos - status.currentStep.startMap < min_dist:
+        press('escape')
+        press('h')
+        sleep(goto_pause)
+        return
+    dest_str = nameIdToName[str(subAreaToNameId[area_id])]
+    if dest_str == "Centre-ville":
+        if Map(id=subAreaToMapId[area_id]).coord[1] < 0:
+            dest_str = "bonta"
+        else:
+            dest_str = "brakmar"
+    pyperclip.copy(dest_str)
+    paste()
+    lok.prepare_to_wait('CurrentMapMessage')
+    press('enter')
+    lok.acquire('CurrentMapMessage')
+    sleep(goto_pause)
+
+
+def enter_haven(lok):
+    lok.prepare_to_wait("EnterHavenBagRequestMessage")
+    lok.prepare_to_wait("CurrentMapMessage")
+    press('h')
+    lok.acquire("EnterHavenBagRequestMessage")
+    lok.acquire("CurrentMapMessage")
+    sleep(goto_pause)
+
+
+def click_zap(lok):
+    lok.prepare_to_wait("ZaapDestinationsMessage")
+    click(573, 371)
+    lok.acquire("ZaapDestinationsMessage")

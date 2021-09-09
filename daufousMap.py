@@ -2,12 +2,31 @@
 import requests
 import json
 
+with open('misc/json/MapPositions.Json') as f:
+    mapPositions = json.load(f)
+    mapIdToCoord = {int(k['id']): [k['posX'], k['posY']] for k in mapPositions}
+
+with open('misc/json/SubAreas.Json') as f:
+    subAreaToNameIdJson = json.load(f)
+    subAreaToNameId = {i["id"]: i["nameId"] for i in subAreaToNameIdJson}
+    subAreaToMapId = {i["id"]: i["mapIds"][0] for i in subAreaToNameIdJson}
+
+
+with open('misc/json/PointOfInterest.Json') as f:
+    mapPositions = json.load(f)
+    PoiIdToNameId = {int(k['id']): k['nameId'] for k in mapPositions}
+
+with open('misc/json/id_to_names.Json', encoding='utf-8') as f:
+    NameIdToName = json.load(f)
+    nameIdToName = NameIdToName["texts"]
+
 with open('misc/json/translator.Json') as f:
     translator = json.load(f)
 
 getKeyFromValue = lambda dic, value: [tupl[0] for tupl in list(dic.items()) if (tupl[1] == value)]
 
 directions = ['top', 'bottom', 'left', 'right', 'No direction']
+
 
 # returns the keys from the distionnary that give the value
 
@@ -42,7 +61,7 @@ def getIndiceDist(indice, x, y, direction, world=0):
     assert direction in directions
     # return distance from said object
     hints = getIndices(x, y, direction, world)
-    if not (hints):
+    if not hints:
         return
     indexList = getKeyFromValue(translator, indice)
     for dic in hints:
@@ -69,7 +88,7 @@ def getIndicesFromMapId(idd, direction, world=0):
 def getIndiceDistFromMapId(indice, idd, direction, world=0):
     assert direction in directions
     hints = getIndicesFromMapId(idd, direction, world)
-    if not (hints):
+    if not hints:
         return
     indexList = getKeyFromValue(translator, indice)
     for dic in hints:

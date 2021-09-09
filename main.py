@@ -1,7 +1,6 @@
 from locks import LockManager
 from sniffer.sniffer import SnifferThread
 from treasureHuntObjects import *
-from daufousMap import *
 import logging
 import os
 from controls import *
@@ -28,8 +27,7 @@ if __name__ == "__main__":
                     assert False, "Hunt really doesnt exist"
                 else:
                     unStuckHunt(status, lok)
-                print("goto start")
-                # assert False
+                goto_start(status, lok)
             elif status.time_to_fight():
                 lok.prepare_to_wait('TreasureHuntFinishedMessage')
                 print("fight")

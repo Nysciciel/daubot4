@@ -1,5 +1,4 @@
-import json
-from daufousMap import getIndiceCoordFromMapId, getIndiceCoord
+from daufousMap import *
 import logging
 
 msg_list = ['SetCharacterRestrictionsMessage',
@@ -10,41 +9,10 @@ msg_list = ['SetCharacterRestrictionsMessage',
             'TreasureHuntFlagRequestMessage',
             "TreasureHuntFlagRemoveRequestMessage",
             'ChangeMapMessage',
-            'GameMapMovementConfirmMessage']
-
-
-def init_mapToCoordDict():
-    with open('misc/json/MapPositions.Json') as f:
-        mapPositions = json.load(f)
-
-    dictIdToCoord = {}
-    for k in mapPositions:
-        dictIdToCoord[int(k['id'])] = [k['posX'], k['posY']]
-
-    return dictIdToCoord
-
-
-def init_PoiIdToNameIdDict():
-    with open('misc/json/PointOfInterest.Json') as f:
-        mapPositions = json.load(f)
-
-    dictPoiIdToNameId = {}
-    for k in mapPositions:
-        dictPoiIdToNameId[int(k['id'])] = k['nameId']
-
-    return dictPoiIdToNameId
-
-
-def init_NameIdToNameDict():
-    with open('misc/json/id_to_names.Json', encoding='utf-8') as f:
-        NameIdToName = json.load(f)
-
-    return NameIdToName["texts"]
-
-
-mapIdToCoord = init_mapToCoordDict()
-PoiIdToNameId = init_PoiIdToNameIdDict()
-nameIdToName = init_NameIdToNameDict()
+            'GameMapMovementConfirmMessage',
+            "EnterHavenBagRequestMessage",
+            "ZaapDestinationsMessage",
+            "MapInformationsRequestMessage"]
 
 
 def PoiIdToName(idd):
@@ -123,6 +91,11 @@ class Map:
 
     def copy(self):
         return Map(id=self.id)
+
+    def __sub__(self, other):
+        if self.coord is None or other.coord is None:
+            return float('inf')
+        return abs(self.coord[0] - other.coord[0]) + abs(self.coord[1] - other.coord[1])
 
 
 class UnknowMap(Map):
@@ -229,6 +202,7 @@ class HuntStatus:
         self.pho_location = None
         self.retries = None
         self.normalHunt = True
+        self.zaap_dest = None
 
     def __str__(self):
         return ('Current Position:' + str(self.pos) + "\n" +
@@ -276,6 +250,8 @@ class HuntStatus:
             self.pos = Map(id=msg['mapId'])
         if msg['__type__'] == "ChangeMapMessage":
             self.pos = Map(id=msg['mapId'])
+        if msg['__type__'] == "MapInformationsRequestMessage":
+            self.pos = Map(id=msg['mapId'])
         if msg['__type__'] == "MapComplementaryInformationsDataMessage":
             for actor in msg['actors']:
                 if "npcId" in actor:
@@ -284,6 +260,8 @@ class HuntStatus:
                         self.pho_location = self.pos.copy()
         if msg['__type__'] == 'TreasureHuntFinishedMessage':
             self.reset()
+        if msg['__type__'] == 'ZaapDestinationsMessage':
+            self.zaap_dest = msg['destinations']
         if msg['__type__'] == "TreasureHuntMessage":
             self.pho_location = None
             self.exists = True
