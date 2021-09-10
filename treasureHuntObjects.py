@@ -1,5 +1,7 @@
 from daufousMap import *
 import logging
+from time import sleep
+HuntMessageSleep = 0.3
 
 msg_list = ['SetCharacterRestrictionsMessage',
             "CurrentMapMessage",
@@ -303,5 +305,6 @@ class HuntStatus:
                                 current_map = s.endMap
                             self.stepList.append(s)
             print(self)
+            sleep(HuntMessageSleep)
         if msg['__type__'] in self.lok.lock_dict:
             self.lok.release(msg['__type__'])

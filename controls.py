@@ -120,7 +120,6 @@ def goto(status, lok):
     lok.prepare_to_wait("MapComplementaryInformationsDataMessage")
     press('enter')
     press('escape')
-    lok.prepare_to_wait("MapComplementaryInformationsDataMessage")
     while status.pos != status.currentStep.endMap:
         print("waiting to be at" + str(status.currentStep.endMap) + " currently at " + str(status.pos))
         sleep(1)
@@ -153,15 +152,15 @@ def currentlyHuntingNoFight():
 def unStuckHunt(status, lok):
     print('Trying to detect hunt')
     enter_haven(lok)
-    while not status.exists:
+    if not status.exists:
         x, y = getFlag()
         lok.prepare_to_wait('TreasureHuntMessage')
         click(x, y)
         lok.prepare_to_wait("TreasureHuntFlagRemoveRequestMessage")
         lok.prepare_to_wait("TreasureHuntMessage")
         click(x, y)
-        lok.acquire('TreasureHuntFlagRemoveRequestMessage')
-        lok.acquire("TreasureHuntMessage")
+        lok.acquire('TreasureHuntFlagRemoveRequestMessage', nocrash=True)
+        lok.acquire("TreasureHuntMessage", nocrash=True)
     press('h')
     sleep(goto_pause)
 
@@ -202,7 +201,6 @@ def validate(status, lok):
 
 def abandon():
     print("abandon")
-    assert False
     sleep(60 * 10)
     click(*locate("imgs/abandon.jpg"))
     press("enter")
@@ -255,35 +253,26 @@ def goto_start(status, lok):
         frigost_area_name = nameIdToName[str(subAreaToNameId[mapIdToSubArea[status.currentStep.startMap.id]])]
         if frigost_area_name == "Berceau d'Alma":
             use_skis(lok)
-            lok.prepare_to_wait("NpcDialogQuestionMessage")
             click(1026, 647)
-            lok.acquire("NpcDialogQuestionMessage")
+            sleep(1)
 
-            lok.prepare_to_wait("CurrentMapMessage")
             click(1003, 671)
-            lok.acquire("CurrentMapMessage")
             sleep(goto_pause)
             return
         elif frigost_area_name == "Larmes d'Ouronigride":
             use_skis(lok)
-            lok.prepare_to_wait("NpcDialogQuestionMessage")
             click(1026, 647)
-            lok.acquire("NpcDialogQuestionMessage")
+            sleep(1)
 
-            lok.prepare_to_wait("CurrentMapMessage")
             click(1064, 692)
-            lok.acquire("CurrentMapMessage")
             sleep(goto_pause)
             return
         elif frigost_area_name == 'Crevasse Perge':
             use_skis(lok)
-            lok.prepare_to_wait("NpcDialogQuestionMessage")
             click(1026, 647)
-            lok.acquire("NpcDialogQuestionMessage")
+            sleep(1)
 
-            lok.prepare_to_wait("CurrentMapMessage")
             click(1037, 717)
-            lok.acquire("CurrentMapMessage")
             sleep(goto_pause)
 
 
@@ -291,15 +280,22 @@ def enter_haven(lok):
     lok.prepare_to_wait("EnterHavenBagRequestMessage")
     lok.prepare_to_wait("CurrentMapMessage")
     press('h')
-    lok.acquire("EnterHavenBagRequestMessage")
-    lok.acquire("CurrentMapMessage")
+    res = lok.acquire("EnterHavenBagRequestMessage") and lok.acquire("CurrentMapMessage", nocrash=True)
     sleep(goto_pause)
+    return res
 
 
 def click_zap(lok):
     lok.prepare_to_wait("ZaapDestinationsMessage")
     click(573, 371)
-    lok.acquire("ZaapDestinationsMessage")
+    res = lok.acquire("ZaapDestinationsMessage", nocrash=True)
+    if not res:
+        lok.prepare_to_wait('LeaveDialogRequestMessage')
+        press('escape')
+        lok.acquire('LeaveDialogRequestMessage')
+        press('h')
+        sleep(goto_pause)
+        assert False, "Zaap didn't respond"
 
 
 def take_hunt(lok):
@@ -315,10 +311,8 @@ def take_hunt(lok):
     pyperclip.copy("/travel -25,-36")
     paste()
     press('enter')
-    lok.prepare_to_wait("MapComplementaryInformationsDataMessage")
     press('enter')
     press('escape')
-    lok.acquire("MapComplementaryInformationsDataMessage")
     sleep(10)
 
     lok.prepare_to_wait("CurrentMapMessage")
@@ -337,14 +331,12 @@ def take_hunt(lok):
     click(1036, 490)
     sleep(goto_pause)
     click(1137, 526)
-    lok.acquire("TreasureHuntMessage")
+    lok.acquire("TreasureHuntMessage", nocrash=True)
 
     press('space')
     pyperclip.copy("/travel -24,-36")
     paste()
     press('enter')
-    lok.prepare_to_wait("MapComplementaryInformationsDataMessage")
     press('enter')
     press('escape')
-    lok.acquire("MapComplementaryInformationsDataMessage")
     sleep(7)

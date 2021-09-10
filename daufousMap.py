@@ -48,7 +48,7 @@ def getIndices(mapId, direction, world=0):
         if not ("hints" in json.loads(r.text).keys()):
             return []
         return json.loads(r.text)["hints"]
-    except NameError:
+    except json.decoder.JSONDecodeError:
         return []
 
 

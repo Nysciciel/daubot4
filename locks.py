@@ -9,12 +9,14 @@ class LockManager:
     def release(self, msg):
         self.lock_dict[msg].set()
 
-    def acquire(self, msg, timeout=30):
+    def acquire(self, msg, timeout=10, nocrash=False):
         print("Acquired " + msg)
-        if not self.lock_dict[msg].wait(timeout):
+        res = self.lock_dict[msg].wait(timeout)
+        if (not res) and (not nocrash):
             assert False, "Lock ran out"
         self.lock_dict[msg].clear()
         print("Released " + msg)
+        return res
 
     def prepare_to_wait(self, msg):
         self.lock_dict[msg].clear()
