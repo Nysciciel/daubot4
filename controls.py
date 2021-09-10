@@ -60,6 +60,7 @@ def click(x, y):
 
 def mouse_random_move():
     pyautogui.move(randint(-10, 10), randint(-10, 10))
+    sleep(click_pause)
 
 
 def screenshot():
@@ -120,9 +121,19 @@ def goto(status, lok):
     lok.prepare_to_wait("MapComplementaryInformationsDataMessage")
     press('enter')
     press('escape')
+
+    pos_before = status.pos
+    cnt = 0
     while status.pos != status.currentStep.endMap:
         print("waiting to be at" + str(status.currentStep.endMap) + " currently at " + str(status.pos))
         sleep(1)
+        if status.pos == pos_before:
+            cnt += 1
+            if cnt == 30:
+                assert False, "Stuck"
+        else:
+            pos_before = status.pos
+            cnt = 0
     print("arrived at" + str(status.pos))
     sleep(goto_pause)
 
@@ -151,10 +162,9 @@ def currentlyHuntingNoFight():
 
 def unStuckHunt(status, lok):
     print('Trying to detect hunt')
-    enter_haven(lok)
+    enter_haven(status, lok)
     if not status.exists:
         x, y = getFlag()
-        lok.prepare_to_wait('TreasureHuntMessage')
         click(x, y)
         lok.prepare_to_wait("TreasureHuntFlagRemoveRequestMessage")
         lok.prepare_to_wait("TreasureHuntMessage")
@@ -166,9 +176,11 @@ def unStuckHunt(status, lok):
 
 
 def validateIndice():
-    while getFlag() is None:
+    flagg = getFlag()
+    while flagg is None:
         mouse_random_move()
-    x, y = getFlag()
+        flagg = getFlag()
+    x, y = flagg
     click(x, y)
 
 
@@ -210,18 +222,18 @@ def goto_start(status, lok):
     if status.pos == status.currentStep.startMap:
         return
     pos = status.pos
-    print("at ", str(status.pos), " need to be at ", str(status.currentStep.startMap))
+    print("at ", str(status.pos), " need to be at ", str(status.currentStep.startMap), " to start")
     x, y = status.currentStep.startMap.coord
     if x <= -42 and y <= -20:
         frigost_area_name = nameIdToName[str(subAreaToNameId[mapIdToSubArea[status.currentStep.startMap.id]])]
     else:
         frigost_area_name = None
-    enter_haven(lok)
+    enter_haven(status, lok)
     click_zap(lok)
     min_dist = float('inf')
     area_id = None
     for dest in status.zaap_dest:
-        dist = Map(id=dest['mapId']) - status.currentStep.startMap
+        dist = Map(dest['mapId']) - status.currentStep.startMap
         if dist < min_dist:
             min_dist = dist
             area_id = dest['subAreaId']
@@ -234,7 +246,7 @@ def goto_start(status, lok):
         return
     dest_str = nameIdToName[str(subAreaToNameId[area_id])]
     if dest_str == "Centre-ville":
-        if Map(id=subAreaToMapId[area_id][0]).coord[1] < 0:
+        if Map(subAreaToMapId[area_id][0]).coord[1] < 0:
             dest_str = "bonta"
         else:
             dest_str = "brakmar"
@@ -276,13 +288,24 @@ def goto_start(status, lok):
             sleep(goto_pause)
 
 
-def enter_haven(lok):
+def enter_haven(status, lok):
     lok.prepare_to_wait("EnterHavenBagRequestMessage")
-    lok.prepare_to_wait("CurrentMapMessage")
+    lok.prepare_to_wait("HavenBagRoomUpdateMessage")
     press('h')
-    res = lok.acquire("EnterHavenBagRequestMessage") and lok.acquire("CurrentMapMessage", nocrash=True)
     sleep(goto_pause)
-    return res
+    if not lok.acquire("EnterHavenBagRequestMessage", nocrash=True):
+        press('h')
+        assert False, "Can't seem to receive any messages"
+    if not lok.acquire("HavenBagRoomUpdateMessage", nocrash=True):
+        move_in_a_random_direction(status, lok)
+
+
+def move_in_a_random_direction(status, lok):
+    if not status.pos:
+        assert False, "Don't start on stuck map fuckface"
+    random_dir = directions[randint(0, 3)]
+    status.currentStep.endMap = Map(getMinDistCoord(status.pos.id, random_dir))
+    goto(status, lok)
 
 
 def click_zap(lok):
@@ -298,41 +321,46 @@ def click_zap(lok):
         assert False, "Zaap didn't respond"
 
 
-def take_hunt(lok):
+def take_hunt(status, lok):
     print("taking hunt")
-    enter_haven(lok)
+    enter_haven(status, lok)
     click_zap(lok)
     pyperclip.copy("champs de cania")
     paste()
     press('enter')
     sleep(goto_pause)
 
+    print("going at box")
     press('space')
     pyperclip.copy("/travel -25,-36")
     paste()
     press('enter')
     press('enter')
     press('escape')
-    sleep(10)
+    sleep(20)
 
+    print("at box")
     lok.prepare_to_wait("CurrentMapMessage")
     click(939, 426)
-    lok.acquire("CurrentMapMessage")
+    lok.acquire("CurrentMapMessage", nocrash=True)
     sleep(goto_pause)
 
+    print("going in box")
     lok.prepare_to_wait("CurrentMapMessage")
     click(1423, 495)
     click(1423, 495)
     click(1423, 495)
-    lok.acquire("CurrentMapMessage")
+    lok.acquire("CurrentMapMessage", nocrash=True)
     sleep(goto_pause)
 
+    print("in box")
     lok.prepare_to_wait("TreasureHuntMessage")
     click(1036, 490)
     sleep(goto_pause)
     click(1137, 526)
     lok.acquire("TreasureHuntMessage", nocrash=True)
 
+    print("got hunt")
     press('space')
     pyperclip.copy("/travel -24,-36")
     paste()
@@ -340,3 +368,4 @@ def take_hunt(lok):
     press('enter')
     press('escape')
     sleep(7)
+    print("out box")

@@ -1,6 +1,7 @@
 from daufousMap import *
 import logging
 from time import sleep
+
 HuntMessageSleep = 0.3
 
 msg_list = ['SetCharacterRestrictionsMessage',
@@ -16,7 +17,9 @@ msg_list = ['SetCharacterRestrictionsMessage',
             "ZaapDestinationsMessage",
             "MapInformationsRequestMessage",
             "NpcDialogQuestionMessage",
-            "LeaveDialogRequestMessage"]
+            "LeaveDialogRequestMessage",
+            "HavenBagRoomUpdateMessage",
+            "GameFightEndMessage"]
 
 
 def PoiIdToName(idd):
@@ -44,12 +47,17 @@ def mapIdFromCoord(coord):
 
 class Map:
 
-    def __init__(self, **kwargs):
-        if "id" in kwargs:
-            self.id = kwargs["id"]
-        else:
-            self._coord = (None, None)
-            self._id = None
+    # def __init__(self, **kwargs):
+    #     if "id" in kwargs:
+    #         self.id = kwargs["id"]
+    #     if "coord" in kwargs:
+    #         self.coord = kwargs["coord"]
+    #     else:
+    #         self._coord = (None, None)
+    #         self._id = None
+
+    def __init__(self, idd=None):
+        self.id = idd
 
     @property
     def coord(self):
@@ -92,7 +100,7 @@ class Map:
         return self.coord == (None, None) or self.id is None
 
     def copy(self):
-        return Map(id=self.id)
+        return Map(self.id)
 
     def __sub__(self, other):
         if self.coord is None or other.id is None:
@@ -164,7 +172,7 @@ class Step:
                 else:
                     self.endMap = UnknowMap()
                     return
-            self.endMap = Map(id=mapId)
+            self.endMap = Map(mapId)
 
     def init_from_json(self, indice_json, mapp):
         direction = {0: 'right', 6: 'top', 4: 'left', 2: 'bottom'}[indice_json['direction']]
@@ -211,7 +219,7 @@ class HuntStatus:
                 "Checkpoint:" + str(self.currentCheckPoint) + "/" + str(self.maxCheckPoint) + "\n" +
                 'Start map:' + str(self.startPos) + "\n" +
                 'Indices number:' + str(self.nIndice) + "\n" +
-                ''.join([str(step) + "\n" for step in self.stepList]))
+                ''.join([str(step) + "\n" for step in self.stepList])) if self.exists else ""
 
     def __repr__(self):
         return self.__str__()
@@ -249,21 +257,21 @@ class HuntStatus:
         else:
             logging.debug(str(msg))
         if msg['__type__'] == "CurrentMapMessage":
-            newMap = Map(id=msg['mapId'])
+            newMap = Map(msg['mapId'])
             if not newMap.isUnknown():
-                self.pos = Map(id=msg['mapId'])
+                self.pos = newMap
         if msg['__type__'] == "ChangeMapMessage":
-            newMap = Map(id=msg['mapId'])
+            newMap = Map(msg['mapId'])
             if not newMap.isUnknown():
-                self.pos = Map(id=msg['mapId'])
+                self.pos = newMap
         if msg['__type__'] == "MapInformationsRequestMessage":
-            newMap = Map(id=msg['mapId'])
+            newMap = Map(msg['mapId'])
             if not newMap.isUnknown():
-                self.pos = Map(id=msg['mapId'])
+                self.pos = newMap
         if msg['__type__'] == "MapComplementaryInformationsDataMessage":
-            newMap = Map(id=msg['mapId'])
+            newMap = Map(msg['mapId'])
             if not newMap.isUnknown():
-                self.pos = Map(id=msg['mapId'])
+                self.pos = newMap
             for actor in msg['actors']:
                 if "npcId" in actor:
                     if (actor["npcId"] == self.currentStep.indice.id) and (
@@ -282,13 +290,14 @@ class HuntStatus:
             self.currentCheckPoint = msg['checkPointCurrent'] + 1
             self.retries = msg['availableRetryCount']
             self.normalHunt = msg['questType'] == 0
+            self.startPos = Map(msg['startMapId'])
             if self.maxCheckPoint == self.currentCheckPoint:
-                self.stepList = []
+                self.stepList = [Step(startMap=self.startPos)]
+                self.currentStep.endMap = self.startPos
                 self.flags = []
                 self.nIndice = None
             else:
-                self.startPos = Map(id=msg['startMapId'])
-                self.flags = [Map(id=flag_json['mapId']) for flag_json in msg['flags']]
+                self.flags = [Map(flag_json['mapId']) for flag_json in msg['flags']]
                 if self.nIndice != 0:
                     self.stepList = []
                     current_map = self.startPos

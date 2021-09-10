@@ -172,6 +172,7 @@ def on_receive(pa, action):
     try:
         direction = from_client(pa)
     except:
+        assert False, "Error here?"
         return
     buf = buf1 if direction else buf2
     buf += raw(pa)
@@ -206,6 +207,7 @@ def launch_in_thread(action, capture_file=None):
 
     e = threading.Event()
     t = threading.Thread(target=_sniff, args=(e,))
+    print("Starting sniffer thread")
     t.start()
 
     def stop():

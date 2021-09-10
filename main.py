@@ -12,32 +12,44 @@ try:
     os.remove("messages.log")
 except FileNotFoundError:
     pass
-logging.basicConfig(filename="messages.log", level=logging.DEBUG, format='%(asctime)s - %(message)s')
+logging.basicConfig(filename="messages.log", level=logging.INFO,
+                    format='%(asctime)s - %(message)s', datefmt='%H:%M:%S')
+lok = LockManager()
+status = HuntStatus(lok)
 
 if __name__ == "__main__":
 
     while True:
 
-        lok = LockManager()
-        status = HuntStatus(lok)
         t = SnifferThread(status.handleMessage)
         try:
-
+            if currentlyHuntingNoFight():
+                unStuckHunt(status, lok)
             while t.is_alive():
                 if not status.exists:
                     if not currentlyHunting():
-                        take_hunt(lok)
+                        take_hunt(status, lok)
                     elif currentlyHuntingNoFight():
                         unStuckHunt(status, lok)
+                    elif locate("imgs/validate.jpg") is not None:
+                        validateEtape()
+                        sleep(3)
+                        continue
                     if not status.exists:
                         assert False, "Can't start at fight"
                     lok.prepare_to_wait("MapComplementaryInformationsDataMessage")
                     goto_start(status, lok)
                 elif status.time_to_fight():
+                    print("at ", status.pos, "fight is at ", status.startPos)
+                    if status.pos != status.startPos:
+                        goto_start(status, lok)
+                        goto(status, lok)
                     lok.prepare_to_wait('TreasureHuntFinishedMessage')
+                    lok.prepare_to_wait("GameFightEndMessage")
                     print("fight")
                     pygame.mixer.music.play()
-                    while not lok.acquire('TreasureHuntFinishedMessage', nocrash=True) and not currentlyHuntingNoFight():
+                    while (not lok.acquire('TreasureHuntFinishedMessage', nocrash=True) and
+                           not lok.acquire('GameFightEndMessage', nocrash=True)):
                         pass
                     print("fight done")
                     sleep(3)
@@ -57,9 +69,9 @@ if __name__ == "__main__":
                         else:
                             mapId = getMinDistCoord(mapId, status.currentStep.direction)
                             print(status, mapId)
-                            if Map(id=mapId) in status.flags:
+                            if Map(mapId) in status.flags:
                                 continue
-                            status.currentStep.endMap = Map(id=mapId)
+                            status.currentStep.endMap = Map(mapId)
                             goto(status, lok)
                             lok.acquire("MapComplementaryInformationsDataMessage")
                 elif status.currentStep.endMap:
