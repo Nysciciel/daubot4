@@ -297,6 +297,7 @@ def enter_haven(status, lok):
         press('h')
         assert False, "Can't seem to receive any messages"
     if not lok.acquire("HavenBagRoomUpdateMessage", nocrash=True):
+        print("Seem to be on a no-haven map, trying to move")
         move_in_a_random_direction(status, lok)
 
 

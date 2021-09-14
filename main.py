@@ -14,13 +14,12 @@ except FileNotFoundError:
     pass
 logging.basicConfig(filename="messages.log", level=logging.INFO,
                     format='%(asctime)s - %(message)s', datefmt='%H:%M:%S')
-lok = LockManager()
-status = HuntStatus(lok)
 
 if __name__ == "__main__":
 
     while True:
-
+        lok = LockManager()
+        status = HuntStatus(lok)
         t = SnifferThread(status.handleMessage)
         try:
             if currentlyHuntingNoFight():
@@ -67,11 +66,12 @@ if __name__ == "__main__":
                             goto(status, lok)
                             break
                         else:
-                            mapId = getMinDistCoord(mapId, status.currentStep.direction)
+                            mapId = getMaxDistCoord(status.pos.id, status.currentStep.direction)
                             print(status, mapId)
-                            if Map(mapId) in status.flags:
-                                continue
-                            status.currentStep.endMap = Map(mapId)
+                            if status.pos == status.currentStep.startMap:
+                                status.currentStep.endMap = Map(mapId)
+                            else:
+                                status.currentStep.endMap = status.currentStep.startMap
                             goto(status, lok)
                             lok.acquire("MapComplementaryInformationsDataMessage")
                 elif status.currentStep.endMap:
@@ -82,6 +82,6 @@ if __name__ == "__main__":
         except AssertionError as e:
             print(e)
             pygame.mixer.music.play()
-            sleep(5)
             t.stop()
             print("Sniffing stopped")
+            sleep(5)

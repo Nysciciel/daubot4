@@ -15,7 +15,10 @@ class LockManager:
         if (not res) and (not nocrash):
             assert False, "Lock ran out"
         self.lock_dict[msg].clear()
-        print("Released " + msg)
+        if res:
+            print("Released " + msg)
+        else:
+            print("Released " + msg + " by timeout")
         return res
 
     def prepare_to_wait(self, msg):

@@ -55,7 +55,7 @@ def getIndices(mapId, direction, world=0):
 def getIndicesFromCoord(x, y, direction, world=0):
     assert direction in directions
     # returns all the data of the list of objects present in said direction from coordinates
-    site = "https://dofus-map.com/huntTool/getData.php?x=" + str(x)+"&y="+str(y)
+    site = "https://dofus-map.com/huntTool/getData.php?x=" + str(x) + "&y=" + str(y)
     site += "&direction=" + direction + "&world=" + str(world) + "&language=fr"
     r = requests.post(site)
     try:
@@ -102,3 +102,27 @@ def getMinDistCoord(mapId, direction, world=0):
                 return dic['i']
             return getKeyFromValue(mapIdToCoord, [dic['x'], dic['y']])[0]
     return getKeyFromValue(mapIdToCoord, [x + dx, y + dy])[0]
+
+
+def getMaxDistCoord(mapId, direction, world=0):
+    assert direction in directions
+    x, y = mapIdToCoord[mapId]
+    hints = getIndices(mapId, direction, world)
+    dx = int(direction == "right") - int(direction == "left")
+    dy = int(direction == "bottom") - int(direction == "top")
+    maxD = 0
+    maxId = None
+    if not hints:
+        return getKeyFromValue(mapIdToCoord, [x + dx, y + dy])[0]
+    for dic in hints:
+        if int(dic['d']) == 10:
+            if 'i' in dic:
+                return dic['i']
+            return getKeyFromValue(mapIdToCoord, [dic['x'], dic['y']])[0]
+        if int(dic['d']) >= maxD:
+            maxD = int(dic['d'])
+            if 'i' in dic:
+                maxId = dic['i']
+            else:
+                maxId = getKeyFromValue(mapIdToCoord, [dic['x'], dic['y']])[0]
+    return maxId
