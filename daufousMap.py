@@ -62,7 +62,8 @@ def getIndicesFromCoord(x, y, direction, world=0):
         if not ("hints" in json.loads(r.text).keys()):
             return []
         return json.loads(r.text)["hints"]
-    except NameError:
+    except (NameError or json.decoder.JSONDecodeError) as e:
+        print(e)
         return []
 
 
@@ -95,13 +96,13 @@ def getMinDistCoord(mapId, direction, world=0):
     dx = int(direction == "right") - int(direction == "left")
     dy = int(direction == "bottom") - int(direction == "top")
     if not hints:
-        return getKeyFromValue(mapIdToCoord, [x + dx, y + dy])[0]
+        return getKeyFromValue(mapIdToCoord, [x + dx, y + dy])[0], 1
     for dic in hints:
         if int(dic['d']) == 1:
             if 'i' in dic:
-                return dic['i']
-            return getKeyFromValue(mapIdToCoord, [dic['x'], dic['y']])[0]
-    return getKeyFromValue(mapIdToCoord, [x + dx, y + dy])[0]
+                return dic['i'], 1
+            return getKeyFromValue(mapIdToCoord, [dic['x'], dic['y']])[0], 1
+    return getKeyFromValue(mapIdToCoord, [x + dx, y + dy])[0], 1
 
 
 def getMaxDistCoord(mapId, direction, world=0):
@@ -113,16 +114,16 @@ def getMaxDistCoord(mapId, direction, world=0):
     maxD = 0
     maxId = None
     if not hints:
-        return getKeyFromValue(mapIdToCoord, [x + dx, y + dy])[0]
+        return getKeyFromValue(mapIdToCoord, [x + dx, y + dy])[0], 1
     for dic in hints:
         if int(dic['d']) == 10:
             if 'i' in dic:
-                return dic['i']
-            return getKeyFromValue(mapIdToCoord, [dic['x'], dic['y']])[0]
+                return dic['i'], 10
+            return getKeyFromValue(mapIdToCoord, [dic['x'], dic['y']])[0], 10
         if int(dic['d']) >= maxD:
             maxD = int(dic['d'])
             if 'i' in dic:
                 maxId = dic['i']
             else:
                 maxId = getKeyFromValue(mapIdToCoord, [dic['x'], dic['y']])[0]
-    return maxId
+    return maxId, maxD

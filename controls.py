@@ -59,6 +59,7 @@ def click(x, y):
 
 
 def mouse_random_move():
+    waitForDofus()
     pyautogui.move(randint(-10, 10), randint(-10, 10))
     sleep(click_pause)
 
@@ -145,6 +146,7 @@ def locate(img, confidence=0.95):
     x, y = min_loc
     if min_val < 1 - confidence:
         return x + im.shape[0] // 2, y + im.shape[1] // 2
+    print("confidence ", 1 - min_val)
     return None
 
 
@@ -312,11 +314,10 @@ def move_in_a_random_direction(status, lok):
 def click_zap(lok):
     lok.prepare_to_wait("ZaapDestinationsMessage")
     click(573, 371)
-    res = lok.acquire("ZaapDestinationsMessage", nocrash=True)
-    if not res:
+    if not lok.acquire("ZaapDestinationsMessage", nocrash=True):
         lok.prepare_to_wait('LeaveDialogRequestMessage')
         press('escape')
-        lok.acquire('LeaveDialogRequestMessage')
+        lok.acquire('LeaveDialogRequestMessage', nocrash=True)
         press('h')
         sleep(goto_pause)
         assert False, "Zaap didn't respond"
