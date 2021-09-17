@@ -169,16 +169,15 @@ def on_receive(pa, action):
     Parse the messages from that buffer
     Calls action on that buffer
     """
-    try:
-        direction = from_client(pa)
-    except:
-        assert False, "Error here?"
-        return
+    direction = from_client(pa)
     buf = buf1 if direction else buf2
     buf += raw(pa)
     msg = Msg.fromRaw(buf, direction)
     while msg:
-        action(msg.json())
+        try:
+            action(msg.json())
+        except Exception as e:
+            print(e)
         msg = Msg.fromRaw(buf, direction)
 
 

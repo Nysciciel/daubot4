@@ -17,7 +17,7 @@ if __name__ == "__main__":
     pygame.mixer.music.load("alert.wav")
     try:
         os.remove("messages.log")
-    except FileNotFoundError:
+    except (FileNotFoundError, PermissionError):
         pass
     logging.basicConfig(filename="messages.log", level=logging.INFO,
                         format='%(asctime)s - %(message)s', datefmt='%H:%M:%S')
@@ -30,6 +30,7 @@ if __name__ == "__main__":
         if currentlyHuntingNoFight():
             unStuckHunt(status, lok)
         while t.is_alive():
+            sleep(1)
             if not status.exists:
                 if not currentlyHunting():
                     take_hunt(status, lok)
@@ -41,8 +42,6 @@ if __name__ == "__main__":
                     continue
                 if not status.exists:
                     assert False, "Can't start at fight"
-                lok.prepare_to_wait("MapComplementaryInformationsDataMessage")
-                goto_start(status, lok)
             elif status.time_to_fight():
                 print("at ", status.pos, "fight is at ", status.startPos)
                 if status.pos != status.startPos:
@@ -51,7 +50,7 @@ if __name__ == "__main__":
                 lok.prepare_to_wait("GameFightEndMessage")
                 print("fight")
                 pygame.mixer.music.play()
-                lok.acquire('GameFightEndMessage', timeout=600)
+                lok.acquire('GameFightEndMessage', timeout=180)
                 print("fight done")
                 sleep(3)
                 press('escape')
@@ -60,6 +59,8 @@ if __name__ == "__main__":
             elif status.time_to_flag():
                 flag(status, lok)
             elif status.is_phorreur():
+                if status.currentCheckPoint == 1 and len(status.flags) == 0:
+                    goto_start(status, lok)
                 mapId = status.currentStep.startMap.id
                 print(status.currentStep.startMap)
                 while True:
@@ -74,7 +75,7 @@ if __name__ == "__main__":
                             if status.pos != status.currentStep.startMap:
                                 status.currentStep.endMap = status.currentStep.startMap
                             else:
-                                idd, dist = getMaxDistCoord(status.pos.id, status.currentStep.direction)
+                                idd, dist = getMinDistCoord(status.pos.id, status.currentStep.direction)
                                 status.currentStep.endMap = Map(idd)
                                 pho_started = True
                                 pho_distance += dist
@@ -100,8 +101,7 @@ if __name__ == "__main__":
                 pho_started = False
             else:
                 abandon()
-    except Exception as e:
-        print(e)
+    finally:
         pygame.mixer.music.play()
         t.stop()
         print("Sniffing stopped")

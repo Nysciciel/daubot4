@@ -126,17 +126,18 @@ def goto(status, lok):
     pos_before = status.pos
     cnt = 0
     while status.pos != status.currentStep.endMap:
-        print("waiting to be at" + str(status.currentStep.endMap) + " currently at " + str(status.pos))
-        sleep(1)
-        if status.pos == pos_before:
-            cnt += 1
-            if cnt == 30:
-                assert False, "Stuck"
-        else:
-            pos_before = status.pos
-            cnt = 0
+        while status.pos != status.currentStep.endMap:
+            print("waiting to be at" + str(status.currentStep.endMap) + " currently at " + str(status.pos))
+            sleep(1)
+            if status.pos == pos_before:
+                cnt += 1
+                if cnt == 30:
+                    assert False, "Stuck"
+            else:
+                pos_before = status.pos
+                cnt = 0
+        sleep(goto_pause)
     print("arrived at" + str(status.pos))
-    sleep(goto_pause)
 
 
 def locate(img, confidence=0.95):
@@ -271,7 +272,7 @@ def goto_start(status, lok):
             sleep(1)
 
             click(1003, 671)
-            sleep(goto_pause)
+            sleep(3)
             return
         elif frigost_area_name == "Larmes d'Ouronigride":
             use_skis(lok)
@@ -279,7 +280,7 @@ def goto_start(status, lok):
             sleep(1)
 
             click(1064, 692)
-            sleep(goto_pause)
+            sleep(3)
             return
         elif frigost_area_name == 'Crevasse Perge':
             use_skis(lok)
@@ -287,7 +288,7 @@ def goto_start(status, lok):
             sleep(1)
 
             click(1037, 717)
-            sleep(goto_pause)
+            sleep(3)
 
 
 def enter_haven(status, lok):
