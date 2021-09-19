@@ -1,11 +1,13 @@
 import sys
 from locks import LockManager
 from treasureHuntObjects import *
+from fight_status import *
 import logging
 import os
 from controls import *
 import pygame
 import sniffer.sniffer
+from fight import *
 
 
 def restart_program():
@@ -50,10 +52,16 @@ if __name__ == "__main__":
                 lok.prepare_to_wait("GameFightEndMessage")
                 print("fight")
                 pygame.mixer.music.play()
-                lok.acquire('GameFightEndMessage', timeout=180)
-                print("fight done")
-                sleep(3)
-                press('escape')
+                status = FightStatus(lok)
+                t.stop()
+                t_f = sniffer.sniffer.SnifferThread(status.handleMessage)
+                try:
+                    do_fight(status)
+                finally:
+                    print("fight done")
+                    t_f.stop()
+                    sleep(3)
+                    press('escape')
             elif status.time_to_validate():
                 validate(status, lok)
             elif status.time_to_flag():

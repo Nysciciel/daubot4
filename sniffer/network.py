@@ -175,7 +175,9 @@ def on_receive(pa, action):
     msg = Msg.fromRaw(buf, direction)
     while msg:
         try:
-            action(msg.json())
+            m = msg.json()
+            m['from_client'] = direction
+            action(m)
         except Exception as e:
             print(e)
         msg = Msg.fromRaw(buf, direction)

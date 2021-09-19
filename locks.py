@@ -1,10 +1,11 @@
 import threading
 from treasureHuntObjects import msg_list
+from fight_status import msg_list as msg_list_fight
 
 
 class LockManager:
     def __init__(self):
-        self.lock_dict = {msg: threading.Event() for msg in msg_list}
+        self.lock_dict = {msg: threading.Event() for msg in msg_list + msg_list_fight}
 
     def release(self, msg):
         self.lock_dict[msg].set()
