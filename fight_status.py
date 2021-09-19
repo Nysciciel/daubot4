@@ -1,8 +1,5 @@
-from daufousMap import *
-import sys, json
 from misc.pydofus.pydofus.dlm import DLM
 from treasureHuntObjects import *
-import numpy as np
 
 msg_list = ["GameFightStartingMessage",
             'GameFightPlacementPossiblePositionsMessage',
@@ -30,7 +27,7 @@ class FightMap:
                "\n")
         for j_index in range(len(self.cells)):
             j = self.cells[j_index]
-            if j_index%2 == 1:
+            if j_index % 2 == 1:
                 res += "  "
             for i in j:
                 b0 = i['mov'] and not i['nonWalkableDuringFight']
@@ -44,7 +41,8 @@ class FightMap:
                 if not b0 and not b1:
                     res += " ■ "
             res += "\n"
-        return res
+
+        return ''.join([i + "\n" if i.replace(' ', '') != '' else '' for i in res.split("\n")])
 
     def __repr__(self):
         return self.__str__()
