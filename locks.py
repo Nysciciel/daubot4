@@ -1,11 +1,30 @@
 import threading
-from treasureHuntObjects import msg_list
-from fight_status import msg_list as msg_list_fight
+
+msg_list = ["GameFightStartingMessage",
+            'GameFightPlacementPossiblePositionsMessage',
+            'SetCharacterRestrictionsMessage',
+            "CurrentMapMessage",
+            "MapComplementaryInformationsDataMessage",
+            'TreasureHuntFinishedMessage',
+            "TreasureHuntMessage",
+            'TreasureHuntFlagRequestMessage',
+            "TreasureHuntFlagRemoveRequestMessage",
+            'ChangeMapMessage',
+            'GameMapMovementConfirmMessage',
+            "EnterHavenBagRequestMessage",
+            "ZaapDestinationsMessage",
+            "MapInformationsRequestMessage",
+            "NpcDialogQuestionMessage",
+            "LeaveDialogRequestMessage",
+            "HavenBagRoomUpdateMessage",
+            "GameFightEndMessage",
+            "GameMapMovementMessage"
+            ]
 
 
 class LockManager:
     def __init__(self):
-        self.lock_dict = {msg: threading.Event() for msg in msg_list + msg_list_fight}
+        self.lock_dict = {msg: threading.Event() for msg in msg_list}
 
     def release(self, msg):
         self.lock_dict[msg].set()

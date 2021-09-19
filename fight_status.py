@@ -1,9 +1,7 @@
+from locks import LockManager
 from misc.pydofus.pydofus.dlm import DLM
+from sniffer import sniffer
 from treasureHuntObjects import *
-
-msg_list = ["GameFightStartingMessage",
-            'GameFightPlacementPossiblePositionsMessage',
-            ]
 
 
 def getMapJson(mapId):
@@ -17,7 +15,7 @@ def getMapJson(mapId):
 
 class FightMap:
     def __init__(self, mapId):
-        self.json = getMapJson(mapId)
+        self.json = getMapJson(int(mapId))
         self.cells = [[self.json['cells'][i + j * 14] for i in range(14)] for j in range(40)]
 
     def __str__(self):
@@ -48,15 +46,6 @@ class FightMap:
         return self.__str__()
 
 
-if __name__ == "__main__":
-    print(FightMap(99090957))
-
-
-class cell:
-    def __init__(self, cellId, fight_map):
-        pass
-
-
 class FightStatus:
 
     def __init__(self, lok):
@@ -78,7 +67,11 @@ class FightStatus:
 
         if msg is None:
             return
-        if msg['__type__'] == "GameFightStartingMessage":
-            self.started = True
+        if msg['__type__'] == "CurrentMapMessage":
+            print(FightMap(msg['mapId']))
         if msg['__type__'] in self.lok.lock_dict:
             self.lok.release(msg['__type__'])
+
+
+if __name__ == "__main__":
+    t = sniffer.SnifferThread(FightStatus(LockManager()).handleMessage)

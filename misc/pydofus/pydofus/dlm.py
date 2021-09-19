@@ -246,7 +246,7 @@ class Map:
 
         for i in range(0, self._obj["backgroundsCount"]):
             bg = Fixture(self)
-            ce.setObj(self._obj["backgroundFixtures"][i])
+            bg.setObj(self._obj["backgroundFixtures"][i])
             self._obj["backgroundFixtures"][i] = bg
 
         for i in range(0, self._obj["foregroundsCount"]):

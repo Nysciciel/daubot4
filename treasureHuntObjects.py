@@ -2,24 +2,6 @@ from daufousMap import *
 import logging
 
 
-msg_list = ['SetCharacterRestrictionsMessage',
-            "CurrentMapMessage",
-            "MapComplementaryInformationsDataMessage",
-            'TreasureHuntFinishedMessage',
-            "TreasureHuntMessage",
-            'TreasureHuntFlagRequestMessage',
-            "TreasureHuntFlagRemoveRequestMessage",
-            'ChangeMapMessage',
-            'GameMapMovementConfirmMessage',
-            "EnterHavenBagRequestMessage",
-            "ZaapDestinationsMessage",
-            "MapInformationsRequestMessage",
-            "NpcDialogQuestionMessage",
-            "LeaveDialogRequestMessage",
-            "HavenBagRoomUpdateMessage",
-            "GameFightEndMessage",
-            "GameMapMovementMessage"]
-
 
 def PoiIdToName(idd):
     try:
