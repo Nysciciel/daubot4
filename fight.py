@@ -1,7 +1,11 @@
+from time import sleep
+
+
 def do_fight(status):
-    status.lok.prepare_to_wait("GameFightStartingMessage")
-    status.lok.prepare_to_wait("MapInformationsRequestMessage")
-    #Start
-    status.lok.acquire('GameFightStartingMessage')
-    #fight
-    status.lok.acquire('MapInformationsRequestMessage')
+    print("Starting the fight")
+    while status.status == "Not started":
+        sleep(3)
+    print("Doing the fight")
+    while status.status != "Finished":
+        sleep(3)
+    print("Fight done")

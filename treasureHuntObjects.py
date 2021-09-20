@@ -1,6 +1,7 @@
 from daufousMap import *
 import logging
 
+from locks import msg_list
 
 
 def PoiIdToName(idd):

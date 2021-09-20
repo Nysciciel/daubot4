@@ -16,7 +16,7 @@ def restart_program():
 
 if __name__ == "__main__":
     pygame.mixer.init()
-    pygame.mixer.music.load("alert.wav")
+    pygame.mixer.music.load("alert.mp3")
     try:
         os.remove("messages.log")
     except (FileNotFoundError, PermissionError):
@@ -45,6 +45,8 @@ if __name__ == "__main__":
                 if not status.exists:
                     assert False, "Can't start at fight"
             elif status.time_to_fight():
+                if not status.pos:
+                    unStuckHunt(status, lok)
                 print("at ", status.pos, "fight is at ", status.startPos)
                 if status.pos != status.startPos:
                     goto_start(status, lok)
@@ -52,16 +54,17 @@ if __name__ == "__main__":
                 lok.prepare_to_wait("GameFightEndMessage")
                 print("fight")
                 pygame.mixer.music.play()
-                status = FightStatus(lok)
+                status_fight = FightStatus(lok, status.pos.id)
                 t.stop()
-                t_f = sniffer.sniffer.SnifferThread(status.handleMessage)
+                t_f = sniffer.sniffer.SnifferThread(status_fight.handleMessage)
                 try:
-                    do_fight(status)
+                    do_fight(status_fight)
                 finally:
-                    print("fight done")
                     t_f.stop()
+                    t = sniffer.sniffer.SnifferThread(status.handleMessage)
                     sleep(3)
                     press('escape')
+                    status.reset()
             elif status.time_to_validate():
                 validate(status, lok)
             elif status.time_to_flag():
@@ -109,8 +112,10 @@ if __name__ == "__main__":
                 pho_started = False
             else:
                 abandon()
-    finally:
+    except Exception as e:
+        print(e)
         pygame.mixer.music.play()
+    finally:
         t.stop()
         print("Sniffing stopped")
         sleep(5)
