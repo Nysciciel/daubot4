@@ -171,6 +171,7 @@ def unStuckHunt(status, lok):
         click(x, y)
         lok.prepare_to_wait("TreasureHuntFlagRemoveRequestMessage")
         lok.prepare_to_wait("TreasureHuntMessage")
+        sleep(1)
         click(x, y)
         lok.acquire('TreasureHuntFlagRemoveRequestMessage', nocrash=True)
         lok.acquire("TreasureHuntMessage", nocrash=True)

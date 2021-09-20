@@ -97,8 +97,14 @@ if __name__ == "__main__":
                                 status.currentStep.endMap = status.currentStep.startMap
                                 goto(status, lok)
                             idd, dist = getMinDistCoord(status.pos.id, status.currentStep.direction)
-                            status.currentStep.endMap = Map(idd)
-                            pho_distance += dist
+                            mapp = Map(idd)
+                            distt = dist
+                            while mapp in status.flags:
+                                idd, distt = getMinDistCoord(mapp.id, status.currentStep.direction)
+                                distt += dist
+                                mapp = Map(idd)
+                            status.currentStep.endMap = mapp
+                            pho_distance += distt
                         print(status, mapId)
                         goto(status, lok)
                         lok.acquire("MapComplementaryInformationsDataMessage")

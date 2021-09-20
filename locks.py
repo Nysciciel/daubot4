@@ -39,7 +39,6 @@ class LockManager:
             print("Released " + msg)
         else:
             print("Released " + msg + " by timeout")
-        self.prepare_to_wait(msg)
         return res
 
     def prepare_to_wait(self, msg):
