@@ -1,3 +1,5 @@
+import pyperclip
+
 from daufousMap import *
 import logging
 
@@ -296,5 +298,7 @@ class HuntStatus:
                                 current_map = s.endMap
                             self.stepList.append(s)
             print(self)
+            print("Destination:" + str(self.currentStep.endMap))
+            pyperclip.copy(self.currentStep.endMap.travelStr())
         if msg['__type__'] in self.lok.lock_dict:
             self.lok.release(msg['__type__'])

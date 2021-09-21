@@ -6,6 +6,7 @@ import logging
 import os
 import sniffer.sniffer
 from fight import *
+from time import sleep
 
 if __name__ == "__main__":
     try:
@@ -26,3 +27,6 @@ if __name__ == "__main__":
             finally:
                 t_f.stop()
                 status.reset()
+        if status.currentStep.endMap == status.pos:
+            print("Arrived")
+        sleep(0.1)

@@ -129,7 +129,6 @@ class FightStatus:
             if len(remaining_ids) > 0:
                 self.enemy_id = remaining_ids[0]
                 self.enemy_pos = pos_dict.pop(self.enemy_id)
-            print(self)
         if msg['__type__'] == "GameFightStartMessage":
             self.status = "Started"
         if msg['__type__'] == "GameFightTurnStartMessage":
@@ -149,7 +148,6 @@ class FightStatus:
             if msg['actorId'] == self.enemy_id:
                 assert self.enemy_pos == msg["keyMovements"][0]
                 self.enemy_pos = msg["keyMovements"][-1]
-            print(self)
         if msg['__type__'] in self.lok.lock_dict:
             self.lok.release(msg['__type__'])
 
