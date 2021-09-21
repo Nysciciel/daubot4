@@ -20,6 +20,7 @@ if __name__ == "__main__":
     t = sniffer.sniffer.SnifferThread(status.handleMessage)
     while t.is_alive():
         if status.exists and status.time_to_fight():
+            t.stop()
             f_status = FightStatus(lok, status.pos.id)
             t_f = sniffer.sniffer.SnifferThread(f_status.handleMessage)
             try:
@@ -27,6 +28,7 @@ if __name__ == "__main__":
             finally:
                 t_f.stop()
                 status.reset()
+                t = sniffer.sniffer.SnifferThread(status.handleMessage)
         if status.currentStep.endMap == status.pos:
             print("Arrived")
         sleep(0.1)

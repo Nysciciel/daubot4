@@ -8,6 +8,8 @@ import sys
 # ctypes.macholib.dyld.DEFAULT_LIBRARY_FALLBACK
 # because the newer macOS do not allow to export
 # $DYLD_FALLBACK_LIBRARY_PATH with sudo
+import traceback
+
 from scapy.layers.inet import IP
 from scapy.packet import Raw
 from scapy.utils import PcapReader
@@ -175,12 +177,12 @@ def on_receive(pa, action):
     msg = Msg.fromRaw(buf, direction)
     while msg:
         try:
-            m = msg.json()
-            m['from_client'] = direction
-            action(m)
-            msg = Msg.fromRaw(buf, direction)
-        except Exception as e:
-            print(e)
+            msg_json = msg.json()
+            msg_json['from_client'] = direction
+            action(msg_json)
+        except:
+            pass
+        msg = Msg.fromRaw(buf, direction)
 
 
 def launch_in_thread(action, capture_file=None):

@@ -1,13 +1,11 @@
 from time import sleep
 
-import fight_status
 
-
-def do_fight(status: fight_status):
+def do_fight(status):
     while status.status == "Not started":
         print("Starting the fight")
-        sleep(0.1)
+        sleep(2)
     while status.status != "Finished":
-        print("Doing the fight")
-        sleep(0.1)
+        print(status)
+        sleep(3)
     print("\nFight done")

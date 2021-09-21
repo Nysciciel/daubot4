@@ -77,11 +77,15 @@ class FightStatus:
         self.turn = -1
 
     def __str__(self):
-        return self.print_map()
+        return ("Map:" + str(self.mapId) +
+                " coords:" + str(coordinatesFromMapId(self.mapId)) +
+                " status:" + str(self.status) +
+                "\n")
 
     def print_map(self):
         res = ("Map:" + str(self.mapId) +
                " coords:" + str(coordinatesFromMapId(self.mapId)) +
+               " status:" + str(self.status) +
                "\n")
         for j_index in range(len(self.map.cells)):
             j = self.map.cells[j_index]
@@ -153,9 +157,9 @@ class FightStatus:
 
 
 if __name__ == "__main__":
-    status = FightStatus(LockManager(), 99090957)
-    t_f = sniffer.SnifferThread(status.handleMessage)
+    f_status = FightStatus(LockManager(), 143397)
+    t_f = sniffer.SnifferThread(f_status.handleMessage)
     try:
-        do_fight(status)
+        do_fight(f_status)
     finally:
         t_f.stop()
