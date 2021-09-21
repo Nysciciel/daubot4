@@ -77,7 +77,7 @@ class FightStatus:
         self.turn = -1
 
     def __str__(self):
-        return ""
+        return self.print_map()
 
     def print_map(self):
         res = ("Map:" + str(self.mapId) +
@@ -103,7 +103,7 @@ class FightStatus:
                 if not cell.walkable and not cell.los:
                     res += " X"
             res += "\n"
-        print(''.join([i + "\n" if i.replace(' ', '') != '' else '' for i in res.split("\n")]))
+        return ''.join([i + "\n" if i.replace(' ', '') != '' else '' for i in res.split("\n")])
 
     def __repr__(self):
         return self.__str__()
@@ -129,6 +129,7 @@ class FightStatus:
             if len(remaining_ids) > 0:
                 self.enemy_id = remaining_ids[0]
                 self.enemy_pos = pos_dict.pop(self.enemy_id)
+            print(self)
         if msg['__type__'] == "GameFightStartMessage":
             self.status = "Started"
         if msg['__type__'] == "GameFightTurnStartMessage":
@@ -148,6 +149,7 @@ class FightStatus:
             if msg['actorId'] == self.enemy_id:
                 assert self.enemy_pos == msg["keyMovements"][0]
                 self.enemy_pos = msg["keyMovements"][-1]
+            print(self)
         if msg['__type__'] in self.lok.lock_dict:
             self.lok.release(msg['__type__'])
 

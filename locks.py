@@ -30,15 +30,10 @@ class LockManager:
         self.lock_dict[msg].set()
 
     def acquire(self, msg, timeout=10, nocrash=False):
-        print("Acquired " + msg)
-        res = self.lock_dict[msg].wait(timeout)
+        res = self.lock_dict[msg].wait(None)
         if (not res) and (not nocrash):
             assert False, "Lock ran out"
         self.lock_dict[msg].clear()
-        if res:
-            print("Released " + msg)
-        else:
-            print("Released " + msg + " by timeout")
         return res
 
     def prepare_to_wait(self, msg):
