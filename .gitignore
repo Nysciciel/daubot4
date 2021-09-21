@@ -1,5 +1,4 @@
 /.idea/
-/dev/
 /__pycache__/
 /sniffer/__pycache__/
 /messages.log
