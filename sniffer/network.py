@@ -178,9 +178,9 @@ def on_receive(pa, action):
             m = msg.json()
             m['from_client'] = direction
             action(m)
+            msg = Msg.fromRaw(buf, direction)
         except Exception as e:
             print(e)
-        msg = Msg.fromRaw(buf, direction)
 
 
 def launch_in_thread(action, capture_file=None):
